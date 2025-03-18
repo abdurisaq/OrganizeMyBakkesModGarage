@@ -9,6 +9,20 @@ std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 void OrganizeMyBakkesModGarage::onLoad()
 {
 	_globalCvarManager = cvarManager;
+
+	std::vector<Preset> presets = this->readPresets("data\\presets.data");
+
+
+
+	cvarManager->registerNotifier(
+		"open_organizemybakkesmodgarage_ui",
+		[this](std::vector<std::string> args) {
+			if (!isWindowOpen_) {
+				Render();
+			}
+		}, "Displays the window for bakkes garage", PERMISSION_ALL
+	);
+
 	//LOG("Plugin loaded!");
 	// !! Enable debug logging by setting DEBUG_LOG = true in logging.h !!
 	//DEBUGLOG("OrganizeMyBakkesModGarage debug mode enabled");
@@ -47,3 +61,47 @@ void OrganizeMyBakkesModGarage::onLoad()
 	// You could also use std::bind here
 	//gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&OrganizeMyBakkesModGarage::YourPluginMethod, this);
 }
+
+std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& file_path) {
+	const char* appdata = std::getenv("APPDATA");
+	if (appdata == nullptr) {
+		std::cerr << "Failed to get APPDATA environment variable\n";
+		return {};
+	}
+	std::string path = std::string(appdata) + "\\bakkesmod\\bakkesmod\\" + file_path;
+
+	LOG("Reading presets from: {}", path);
+
+	std::vector<Preset> presets;
+
+	std::ifstream file(path);
+
+	if (file.is_open()) {
+		std::string line;
+		while (std::getline(file, line)) {
+			std::istringstream iss(line);
+			std::string name, encoded_id;
+			if (std::getline(iss, name, '\t') && std::getline(iss, encoded_id)) {
+
+				presets.push_back({ name, encoded_id });
+			}
+		}
+	}
+	else {
+		std::cerr << "Failed to open presets.data\n";
+	}
+
+	return presets;
+}
+
+
+
+void OrganizeMyBakkesModGarage::OnGameThread(std::function<void()>&& func) const
+{
+	gameWrapper->Execute([func = std::move(func)](...) {
+		func();
+		});
+}
+
+
+
