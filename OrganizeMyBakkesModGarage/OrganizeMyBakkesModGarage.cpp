@@ -6,11 +6,14 @@ BAKKESMOD_PLUGIN(OrganizeMyBakkesModGarage, "write a plugin description here", p
 
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
+std::vector<std::pair<std::string, std::vector<Preset>>> groups;
+std::string newGroupName;
+
 void OrganizeMyBakkesModGarage::onLoad()
 {
 	_globalCvarManager = cvarManager;
 
-	std::vector<Preset> presets = this->readPresets("data\\presets.data");
+	//std::vector<Preset> presets = this->readPresets("data\\presets.data");
 
 
 
@@ -22,6 +25,14 @@ void OrganizeMyBakkesModGarage::onLoad()
 			}
 		}, "Displays the window for bakkes garage", PERMISSION_ALL
 	);
+
+	gameWrapper->HookEvent("Function TAGame.GFxData_MainMenu_TA.MainMenuAdded", [this](std::string eventName) {
+		if (!defaultHooked){
+			defaultHooked = true;
+			cvarManager->setBind("F4", "open_organizemybakkesmodgarage_ui");
+			LOG("Default bind set to F4 on main menu load.");
+		}		
+	});
 
 	//LOG("Plugin loaded!");
 	// !! Enable debug logging by setting DEBUG_LOG = true in logging.h !!
@@ -103,5 +114,83 @@ void OrganizeMyBakkesModGarage::OnGameThread(std::function<void()>&& func) const
 		});
 }
 
+//
+//
+void OrganizeMyBakkesModGarage::RenderSettings()
+{
+
+	static char input_buffer[16] = "F4";
+	ImGui::Text("Current binding: %s", bind_key);
+	ImGui::InputText("##bind_key", input_buffer, IM_ARRAYSIZE(input_buffer));
+	ImGui::SameLine();
+	if (ImGui::Button("Set bind")) {
+		cvarManager->removeBind(bind_key);
+		cvarManager->setBind(input_buffer, "open_organizemybakkesmodgarage_ui");
+		bind_key = input_buffer;
+		LOG("Key bind changed to: {}", input_buffer);
+	}
 
 
+	ImGui::Text("Hello World in settings");
+}
+
+
+void OrganizeMyBakkesModGarage::RenderWindow() {
+	_globalCvarManager = cvarManager;
+	static std::vector<Preset> presets = this->readPresets("data\\presets.data");
+
+
+	// create grups
+	ImGui::Text("Create New Group:");
+	ImGui::InputText("##GroupName", &newGroupName);
+	if (ImGui::Button("Create Group") && !newGroupName.empty()) {
+		groups.emplace_back(newGroupName, std::vector<Preset>{});
+		newGroupName.clear();
+	}
+
+	ImGui::Separator();
+
+	// group stuff
+	for (size_t i = 0; i < groups.size(); ++i) {
+		ImGui::Text("%s (%zu presets)", groups[i].first.c_str(), groups[i].second.size());
+
+		ImGui::SameLine();
+		if (ImGui::Button(("+##AddPreset" + std::to_string(i)).c_str())) {
+			ImGui::OpenPopup(("AddPresetPopup##" + std::to_string(i)).c_str());
+		}
+
+		if (ImGui::BeginPopup(("AddPresetPopup##" + std::to_string(i)).c_str())) {
+			for (const auto& preset : presets) {
+				if (ImGui::Selectable(preset.name.c_str())) {
+					groups[i].second.push_back(preset);
+				}
+			}
+			ImGui::EndPopup();
+		}
+
+		if (!groups[i].second.empty()) {
+			if (ImGui::CollapsingHeader(("Group: " + groups[i].first).c_str())) {
+				for (size_t j = 0; j < groups[i].second.size(); ++j) {
+					const auto& preset = groups[i].second[j];
+					ImGui::Text("%s", preset.name.c_str());
+
+					ImGui::SameLine();
+					if (ImGui::Button(("-##RemovePreset" + std::to_string(i) + std::to_string(j)).c_str())) {
+						groups[i].second.erase(groups[i].second.begin() + j);
+					}
+
+					ImGui::SameLine();
+					if (ImGui::Button(("Run##RunPreset" + std::to_string(i) + std::to_string(j)).c_str())) {
+						std::string command = "sleep 1;cl_itemmod_code " + preset.id;
+						LOG("Executing preset: %s", preset.id.c_str());
+						cvarManager->executeCommand(command);
+						/*OnGameThread([this,command] {
+		                    cvarManager->executeCommand(command);
+							    });*/
+					}
+				}
+			}
+		}
+	}
+
+}

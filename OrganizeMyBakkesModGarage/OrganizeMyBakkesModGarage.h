@@ -32,6 +32,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 
 	//std::shared_ptr<bool> enabled;
 	std::string bind_key = "F4";
+	bool defaultHooked = false;
 	//Boilerplate
 	void onLoad() override;
 	std::vector<Preset> readPresets(const std::string& file_path);
