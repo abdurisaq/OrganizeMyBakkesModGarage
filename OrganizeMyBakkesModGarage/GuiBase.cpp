@@ -44,11 +44,11 @@ void PluginWindowBase::OnOpen()
 void PluginWindowBase::OnClose()
 {
 	isWindowOpen_ = false;
+	
 }
 
 void PluginWindowBase::Render()
 {
-	LOG("Rendering window");
 	if (!ImGui::Begin(menuTitle_.c_str(), &isWindowOpen_, ImGuiWindowFlags_None))
 	{
 		// Early out if the window is collapsed, as an optimization.

@@ -66,10 +66,12 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	}
 
 	std::vector<std::shared_ptr<GuiFeatureBase>> gui_features_;
+	std::string toLowerCase(const std::string& str);
 
 
 public:
-	void OnGameThread(std::function<void()>&& func) const;
+	
 	void RenderSettings() override; // Uncomment if you wanna render your own tab in the settings menu
 	void RenderWindow() override; // Uncomment if you want to render your own plugin window
+	void OnClose() override;
 };
