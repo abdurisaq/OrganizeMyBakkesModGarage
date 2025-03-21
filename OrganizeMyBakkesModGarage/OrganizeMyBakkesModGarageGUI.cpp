@@ -63,6 +63,12 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				showAddPresetWindow = true;
 			}
 			ImGui::SameLine();
+			if (ImGui::Button(("Delete Group##" + std::to_string(i)).c_str())) {
+				groups.erase(groups.begin() + i);
+				ImGui::PopID();
+				continue; // Skip rendering the deleted group
+			}
+			ImGui::SameLine();
 
 			if (ImGui::CollapsingHeader((groups[i].first + " (" + std::to_string(groups[i].second.size()) + " presets)").c_str())) {
 
@@ -75,7 +81,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				ImGui::BeginChild("PresetListInGroup", ImVec2(groupWindowSize.x, childSize.y), true);
 				for (size_t j = 0; j < groups[i].second.size(); ++j) {
 					const auto& preset = groups[i].second[j];
-					ImGui::Button(preset.name.c_str());
+					ImGui::Text(preset.name.c_str());
 
 					ImGui::SameLine();
 					if (ImGui::Button(("Apply##" + std::to_string(i) + std::to_string(j)).c_str())) {
