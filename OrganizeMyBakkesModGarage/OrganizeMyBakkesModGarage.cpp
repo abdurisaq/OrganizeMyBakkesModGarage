@@ -22,23 +22,23 @@ void OrganizeMyBakkesModGarage::onLoad()
 		"open_organizemybakkesmodgarage_ui",
 		[this](std::vector<std::string> args) {
 			if (!isWindowOpen_) {
-				Render();
+				LOG("Opening OrganizeMyBakkesModGarage window");
+				
+				cvarManager->executeCommand("togglemenu " + GetMenuName());
+				
+				
 			}
 		}, "Displays the window for bakkes garage.", PERMISSION_ALL
 	);
+
+	
 
 	std::filesystem::path myDataFolder = gameWrapper->GetDataFolder() / "OrganizeMyBakkesModGarage";
 	groupFilePath = myDataFolder / "groups.txt";
 	LoadGroupsFromFile(groupFilePath);
 
 
-	/*cvarManager->registerNotifier("get_map_name",
-		[this](std::vector<std::string> args) {
-			std::string mapName = gameWrapper->GetCurrentMap();
-			unsigned long long id =gameWrapper->GetSteamID();
-			LOG("Current map: {}", mapName);
-			LOG("Steam ID: {}", id);
-		}, "Logs the current map name to the console", PERMISSION_ALL);*/
+	
 
 
 	
@@ -203,6 +203,8 @@ void OrganizeMyBakkesModGarage::OnGameThread(std::function<void()>&& func) const
 	gameWrapper->Execute([func = std::move(func)](...) {
 		func();
 		});
+
+	
 }
 
 //
@@ -221,8 +223,8 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		LOG("Key bind changed to: {}", input_buffer);
 	}
 
+	
 
-	ImGui::Text("Hello World in settings");
 }
 
 std::string toLowerCase(const std::string& str) {
@@ -235,9 +237,11 @@ std::string toLowerCase(const std::string& str) {
 
 
 void OrganizeMyBakkesModGarage::RenderWindow() {
+	LOG("In Render window function");
 	static std::vector<Preset> presets = this->readPresets("data\\presets.data");
 	_globalCvarManager = cvarManager;
 
+	//ImGui::Begin("Preset Viewer");
 
 	ImGui::Text("Create New Group:");
 	ImGui::InputText("##GroupName", &newGroupName);
@@ -284,7 +288,11 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 					if (ImGui::Button(("Apply##" + std::to_string(i) + std::to_string(j)).c_str())) {
 						std::string command = "sleep 1;cl_itemmod_code " + preset.id;
 						LOG("Executing preset: %s", preset.id.c_str());
-						_globalCvarManager->executeCommand(command);
+						//_globalCvarManager->executeCommand(command);
+
+						gameWrapper->Execute([this,command](GameWrapper* gw) {
+							cvarManager->executeCommand(command, false);
+							});
 					}
 
 					ImGui::SameLine();
@@ -340,4 +348,6 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 
 		ImGui::End();
 	}
+
+	//ImGui::End();
 }

@@ -54,7 +54,6 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	void SaveGroupsToFile(const std::filesystem::path& filePath);
 	void LoadGroupsFromFile(const std::filesystem::path& filePath);
 
-
 	template <typename T, typename... Args>
 	[[nodiscard]] std::shared_ptr<T> CreateModule(Args&&... args)
 	{
