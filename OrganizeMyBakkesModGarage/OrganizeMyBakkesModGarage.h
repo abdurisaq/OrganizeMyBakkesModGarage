@@ -5,6 +5,7 @@
 #include "bakkesmod/plugin/pluginwindow.h"
 #include "bakkesmod/plugin/PluginSettingsWindow.h"
 
+
 #include <Windows.h>
 #include <filesystem>
 
@@ -24,6 +25,7 @@ class Preset {
 	std::string id;
 };
 
+
 class GuiFeatureBase;
 
 class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
@@ -39,13 +41,19 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	std::string searchQuery;
 
 
+	std::filesystem::path groupFilePath;
+
 	//std::shared_ptr<bool> enabled;
 	std::string bind_key = "F4";
 	bool defaultHooked = false;
 	//Boilerplate
 	void onLoad() override;
 	std::vector<Preset> readPresets(const std::string& file_path);
-	//void onUnload() override; // Uncomment and implement if you need a unload method
+
+	void onUnload() override; // Uncomment and implement if you need a unload method
+	void SaveGroupsToFile(const std::filesystem::path& filePath);
+	void LoadGroupsFromFile(const std::filesystem::path& filePath);
+
 
 	template <typename T, typename... Args>
 	[[nodiscard]] std::shared_ptr<T> CreateModule(Args&&... args)
@@ -59,6 +67,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	}
 
 	std::vector<std::shared_ptr<GuiFeatureBase>> gui_features_;
+
 
 public:
 	void OnGameThread(std::function<void()>&& func) const;

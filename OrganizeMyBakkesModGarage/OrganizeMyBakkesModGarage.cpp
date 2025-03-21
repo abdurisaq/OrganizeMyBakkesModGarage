@@ -15,7 +15,7 @@ void OrganizeMyBakkesModGarage::onLoad()
 	_globalCvarManager = cvarManager;
 
 	//std::vector<Preset> presets = this->readPresets("data\\presets.data");
-
+	
 
 
 	cvarManager->registerNotifier(
@@ -27,8 +27,9 @@ void OrganizeMyBakkesModGarage::onLoad()
 		}, "Displays the window for bakkes garage.", PERMISSION_ALL
 	);
 
-	
-
+	std::filesystem::path myDataFolder = gameWrapper->GetDataFolder() / "OrganizeMyBakkesModGarage";
+	groupFilePath = myDataFolder / "groups.txt";
+	LoadGroupsFromFile(groupFilePath);
 
 
 	/*cvarManager->registerNotifier("get_map_name",
@@ -89,6 +90,78 @@ void OrganizeMyBakkesModGarage::onLoad()
 	//gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&OrganizeMyBakkesModGarage::YourPluginMethod, this);
 }
 
+
+void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& filePath) {
+
+	std::filesystem::create_directories(filePath.parent_path());
+
+	std::ofstream outFile(filePath);
+	if (!outFile.is_open()) {
+		std::cerr << "Failed to open file for writing: " << filePath << std::endl;
+		return;
+	}
+
+	for (const auto& group : groups) {
+		// Write group name
+		outFile << group.first << ":\n";  // group.first is the group name
+
+		// Write presets in the group
+		for (const auto& preset : group.second) {
+			outFile << "    - " << preset.name << ": " << preset.id << "\n";
+		}
+
+		outFile << "\n"; // Add a blank line between groups
+	}
+
+	outFile.close();
+	std::cout << "Groups saved to file: " << filePath << std::endl;
+}
+
+void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& filePath) {
+	std::ifstream inFile(filePath);
+	if (!inFile.is_open()) {
+		std::cerr << "Failed to open file for reading: " << filePath << std::endl;
+		return;
+	}
+
+	std::string line;
+	std::string currentGroupName;
+	std::vector<Preset> currentPresets;
+
+	while (std::getline(inFile, line)) {
+		if (line.empty()) continue;
+
+		// If it's a group name line (e.g., "GroupName:")
+		if (line.back() == ':') {
+			if (!currentGroupName.empty()) {
+				// Save the previous group if it exists
+				groups.push_back({ currentGroupName, currentPresets });
+			}
+
+			currentGroupName = line.substr(0, line.size() - 1);  // Remove the ":"
+			currentPresets.clear();
+		}
+		// If it's a preset line (e.g., "    - PresetName: preset_id")
+		else if (line.find("    - ") == 0) {
+			std::string presetLine = line.substr(6);  // Remove the "    - " part
+			std::istringstream ss(presetLine);
+			std::string presetName, presetId;
+			if (std::getline(ss, presetName, ':') && std::getline(ss, presetId)) {
+				currentPresets.push_back({ presetName, presetId });
+			}
+		}
+	}
+
+	// Add the last group
+	if (!currentGroupName.empty()) {
+		groups.push_back({ currentGroupName, currentPresets });
+	}
+
+	inFile.close();
+	std::cout << "Groups loaded from file: " << filePath << std::endl;
+
+
+}
 std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& file_path) {
 	const char* appdata = std::getenv("APPDATA");
 	if (appdata == nullptr) {
@@ -121,7 +194,9 @@ std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& fi
 	return presets;
 }
 
-
+void OrganizeMyBakkesModGarage::onUnload() {
+	SaveGroupsToFile(groupFilePath);
+}
 
 void OrganizeMyBakkesModGarage::OnGameThread(std::function<void()>&& func) const
 {
@@ -181,7 +256,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 
 	if (!groups.empty()) {
 		ImGui::BeginChild("Groups", ImVec2(0, remainingHeight), true); 
-		for (size_t i = 0; i < groups.size(); ++i) {
+		for (int i = 0; i < groups.size(); ++i) {
 			
 			ImGui::PushID(i);  
 			ImVec2 availSpace = ImGui::GetContentRegionAvail(); 
@@ -238,7 +313,6 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 		// convert ot lower case
 		std::string lowerSearchQuery = toLowerCase(searchQuery);
 
-		
 		ImGui::BeginChild("PresetList", ImVec2(380, 250), true);  
 		for (const auto& preset : presets) {
 			
