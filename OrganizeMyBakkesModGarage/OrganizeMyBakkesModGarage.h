@@ -5,7 +5,8 @@
 #include "bakkesmod/plugin/pluginwindow.h"
 #include "bakkesmod/plugin/PluginSettingsWindow.h"
 
-
+#include <Windows.h>
+#include <filesystem>
 
 #include <fstream>
 #include <sstream>
@@ -29,6 +30,14 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	,public SettingsWindowBase // Uncomment if you wanna render your own tab in the settings menu
 	,public PluginWindowBase // Uncomment if you want to render your own plugin window
 {
+
+	std::vector<std::pair<std::string, std::vector<Preset>>> groups;
+	std::string newGroupName;
+	std::vector<Preset> presets;
+	bool showAddPresetWindow = false;
+	int currentGroupIndex = -1;
+	std::string searchQuery;
+
 
 	//std::shared_ptr<bool> enabled;
 	std::string bind_key = "F4";

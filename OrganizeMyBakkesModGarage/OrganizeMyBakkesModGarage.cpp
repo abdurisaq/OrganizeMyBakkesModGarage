@@ -6,8 +6,9 @@ BAKKESMOD_PLUGIN(OrganizeMyBakkesModGarage, "write a plugin description here", p
 
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
-std::vector<std::pair<std::string, std::vector<Preset>>> groups;
-std::string newGroupName;
+//std::vector<std::pair<std::string, std::vector<Preset>>> groups;
+//std::string newGroupName;
+
 
 void OrganizeMyBakkesModGarage::onLoad()
 {
@@ -23,16 +24,31 @@ void OrganizeMyBakkesModGarage::onLoad()
 			if (!isWindowOpen_) {
 				Render();
 			}
-		}, "Displays the window for bakkes garage", PERMISSION_ALL
+		}, "Displays the window for bakkes garage.", PERMISSION_ALL
 	);
 
-	gameWrapper->HookEvent("Function TAGame.GFxData_MainMenu_TA.MainMenuAdded", [this](std::string eventName) {
+	
+
+
+
+	/*cvarManager->registerNotifier("get_map_name",
+		[this](std::vector<std::string> args) {
+			std::string mapName = gameWrapper->GetCurrentMap();
+			unsigned long long id =gameWrapper->GetSteamID();
+			LOG("Current map: {}", mapName);
+			LOG("Steam ID: {}", id);
+		}, "Logs the current map name to the console", PERMISSION_ALL);*/
+
+
+	
+
+	/*gameWrapper->HookEvent("Function TAGame.GFxData_MainMenu_TA.MainMenuAdded", [this](std::string eventName) {
 		if (!defaultHooked){
 			defaultHooked = true;
 			cvarManager->setBind("F4", "open_organizemybakkesmodgarage_ui");
 			LOG("Default bind set to F4 on main menu load.");
 		}		
-	});
+	});*/
 
 	//LOG("Plugin loaded!");
 	// !! Enable debug logging by setting DEBUG_LOG = true in logging.h !!
@@ -134,13 +150,20 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 	ImGui::Text("Hello World in settings");
 }
 
+std::string toLowerCase(const std::string& str) {
+	std::string lowerStr = str;
+	std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
+		[](unsigned char c) { return std::tolower(c); });
+	return lowerStr;
+}
+
+
 
 void OrganizeMyBakkesModGarage::RenderWindow() {
-	_globalCvarManager = cvarManager;
 	static std::vector<Preset> presets = this->readPresets("data\\presets.data");
+	_globalCvarManager = cvarManager;
 
 
-	// create grups
 	ImGui::Text("Create New Group:");
 	ImGui::InputText("##GroupName", &newGroupName);
 	if (ImGui::Button("Create Group") && !newGroupName.empty()) {
@@ -150,47 +173,97 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 
 	ImGui::Separator();
 
-	// group stuff
-	for (size_t i = 0; i < groups.size(); ++i) {
-		ImGui::Text("%s (%zu presets)", groups[i].first.c_str(), groups[i].second.size());
+	ImVec2 windowSize = ImGui::GetWindowSize();
 
-		ImGui::SameLine();
-		if (ImGui::Button(("+##AddPreset" + std::to_string(i)).c_str())) {
-			ImGui::OpenPopup(("AddPresetPopup##" + std::to_string(i)).c_str());
-		}
+	float topSectionHeight = ImGui::GetCursorPosY() + ImGui::GetTextLineHeightWithSpacing() + ImGui::GetFrameHeightWithSpacing();
 
-		if (ImGui::BeginPopup(("AddPresetPopup##" + std::to_string(i)).c_str())) {
-			for (const auto& preset : presets) {
-				if (ImGui::Selectable(preset.name.c_str())) {
-					groups[i].second.push_back(preset);
-				}
+	float remainingHeight = windowSize.y - topSectionHeight;
+
+	if (!groups.empty()) {
+		ImGui::BeginChild("Groups", ImVec2(0, remainingHeight), true); 
+		for (size_t i = 0; i < groups.size(); ++i) {
+			
+			ImGui::PushID(i);  
+			ImVec2 availSpace = ImGui::GetContentRegionAvail(); 
+			ImGui::SetNextItemWidth(availSpace.x * 0.5f);
+			if (ImGui::Button(("+##AddPreset" + std::to_string(i)).c_str())) {
+				currentGroupIndex = i;
+				showAddPresetWindow = true;
 			}
-			ImGui::EndPopup();
-		}
+			ImGui::SameLine();
 
-		if (!groups[i].second.empty()) {
-			if (ImGui::CollapsingHeader(("Group: " + groups[i].first).c_str())) {
+			if (ImGui::CollapsingHeader((groups[i].first + " (" + std::to_string(groups[i].second.size()) + " presets)").c_str())) {
+			
+				
+				ImVec2 groupWindowSize = ImGui::GetWindowSize();
+
+				ImVec2 childSize = ImVec2(groupWindowSize.x, groupWindowSize.y * 0.2f); 
+
+				
+				ImGui::BeginChild("PresetListInGroup", ImVec2(groupWindowSize.x, childSize.y), true);  
 				for (size_t j = 0; j < groups[i].second.size(); ++j) {
 					const auto& preset = groups[i].second[j];
-					ImGui::Text("%s", preset.name.c_str());
+					ImGui::Button(preset.name.c_str());
 
 					ImGui::SameLine();
-					if (ImGui::Button(("-##RemovePreset" + std::to_string(i) + std::to_string(j)).c_str())) {
-						groups[i].second.erase(groups[i].second.begin() + j);
+					if (ImGui::Button(("Apply##" + std::to_string(i) + std::to_string(j)).c_str())) {
+						std::string command = "sleep 1;cl_itemmod_code " + preset.id;
+						LOG("Executing preset: %s", preset.id.c_str());
+						_globalCvarManager->executeCommand(command);
 					}
 
 					ImGui::SameLine();
-					if (ImGui::Button(("Run##RunPreset" + std::to_string(i) + std::to_string(j)).c_str())) {
-						std::string command = "sleep 1;cl_itemmod_code " + preset.id;
-						LOG("Executing preset: %s", preset.id.c_str());
-						cvarManager->executeCommand(command);
-						/*OnGameThread([this,command] {
-		                    cvarManager->executeCommand(command);
-							    });*/
+					if (ImGui::Button(("Delete##" + std::to_string(i) + std::to_string(j)).c_str())) {
+						groups[i].second.erase(groups[i].second.begin() + j);
+					}
+				}
+				ImGui::EndChild();  
+			}
+
+			ImGui::PopID(); 
+
+			
+			ImGui::Separator();  
+		}
+		ImGui::EndChild();
+	}
+
+	
+	if (showAddPresetWindow && currentGroupIndex != -1) {
+		ImGui::SetNextWindowSize(ImVec2(400, 300));
+		ImGui::Begin("Add Preset", &showAddPresetWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+
+		ImGui::InputText("Search##SearchPreset", &searchQuery);
+
+		// convert ot lower case
+		std::string lowerSearchQuery = toLowerCase(searchQuery);
+
+		
+		ImGui::BeginChild("PresetList", ImVec2(380, 250), true);  
+		for (const auto& preset : presets) {
+			
+			//
+			if (lowerSearchQuery.empty() || toLowerCase(preset.name).find(lowerSearchQuery) != std::string::npos) {
+				
+				bool presetInGroup = false;
+				for (const auto& groupPreset : groups[currentGroupIndex].second) {
+					if (groupPreset.id == preset.id) {
+						presetInGroup = true;
+						break;
+					}
+				}
+
+				
+				if (!presetInGroup) {
+					if (ImGui::Selectable(preset.name.c_str())) {
+						groups[currentGroupIndex].second.push_back(preset);
+						showAddPresetWindow = false;
 					}
 				}
 			}
 		}
-	}
+		ImGui::EndChild(); 
 
+		ImGui::End();
+	}
 }
