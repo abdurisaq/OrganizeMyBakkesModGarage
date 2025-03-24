@@ -110,6 +110,7 @@
     </ClCompile>
     <ClCompile Include="OrganizeMyBakkesModGarage.cpp" />
     <ClCompile Include="GuiBase.cpp" />
+    <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imconfig.h" />

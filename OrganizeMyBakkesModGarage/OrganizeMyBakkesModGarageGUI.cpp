@@ -21,18 +21,12 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 }
 
 
-std::string OrganizeMyBakkesModGarage::toLowerCase(const std::string& str) {
-	std::string lowerStr = str;
-	std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
-		[](unsigned char c) { return std::tolower(c); });
-	return lowerStr;
-}
 
 
 
 void OrganizeMyBakkesModGarage::RenderWindow() {
 	
-	static std::vector<Preset> presets = this->readPresets("data\\presets.data");
+
 	_globalCvarManager = cvarManager;
 
 
@@ -50,14 +44,26 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 		for (int i = 0; i < sortOptions.size(); ++i) {
 			std::string option = sortOptions[i];
 			if (i == currentSortOption) {
-				option += " *";
+				if (sortDirection) {
+					option += " ^";
+				}
+				else {
+					option += " v";
+				}
 			}
 			if (ImGui::Selectable(option.c_str())) {//sortOptions[i].c_str()
 				currentSortOption = i;
+				if (currentSortOption == pastSortOption) {
+					sortDirection = !sortDirection;
+				}
+				bool direction = sortDirection;
 				switch(currentSortOption) {
 				case 0:
-					std::sort(groups.begin(), groups.end(), [](const std::pair<std::string, std::vector<Preset>>& a, const std::pair<std::string, std::vector<Preset>>& b) {
-						return a.first < b.first;
+					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, std::vector<Preset>>& a, const std::pair<std::string, std::vector<Preset>>& b) {
+						if (direction) {
+							return a.first < b.first;
+						}
+						return a.first > b.first;
 						});
 					break;
 				case 1:
@@ -65,12 +71,16 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 					break;
 
 				case 2:
-					std::sort(groups.begin(), groups.end(), [](const std::pair<std::string, std::vector<Preset>>& a, const std::pair<std::string, std::vector<Preset>>& b) {
-						return a.second.size() > b.second.size();
+					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, std::vector<Preset>>& a, const std::pair<std::string, std::vector<Preset>>& b) {
+						if (direction) {
+							return a.second.size() > b.second.size();
+						}
+						return a.second.size() < b.second.size();
 						});
 					break;
 
 				}
+				pastSortOption = currentSortOption;
 			}
 		}
 		ImGui::EndPopup();
@@ -132,10 +142,10 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 					ImGui::BeginChild("PresetListInGroup", ImVec2(groupWindowSize.x, childSize.y), true);
 					for (size_t j = 0; j < groups[i].second.size(); ++j) {
 						const auto& preset = groups[i].second[j];
-						ImGui::Text(preset.name.c_str());
+						/*ImGui::Text(preset.name.c_str());*/
 
-						ImGui::SameLine();
-						if (ImGui::Button(("Apply##" + std::to_string(i) + std::to_string(j)).c_str())) {
+						//ImGui::SameLine();
+						if (ImGui::Button(preset.name.c_str())) {//ImGui::Button(("Apply##" + std::to_string(i) + std::to_string(j)).c_str())
 							std::string command = "sleep 1;cl_itemmod_code " + preset.id;
 							LOG("Executing preset: %s", preset.id.c_str());
 							;
@@ -145,10 +155,10 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 								});
 						}
 
-						ImGui::SameLine();
+						/*ImGui::SameLine();
 						if (ImGui::Button(("Delete##" + std::to_string(i) + std::to_string(j)).c_str())) {
 							groups[i].second.erase(groups[i].second.begin() + j);
-						}
+						}*/
 					}
 					ImGui::EndChild();
 					
@@ -158,20 +168,45 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				ImVec2 cursorPosAfterButton = ImGui::GetCursorPos();
 				ImGui::SameLine();//availSpace 
 				int buttonSizeX = availSpace.x * 0.15f;
-				if(buttonSizeX < 100) buttonSizeX = 100;
+				if(buttonSizeX < 80) buttonSizeX = 80;
 				ImVec2 buttonSize = ImVec2(buttonSizeX, 20);
 				ImGui::SetCursorPosX(availSpace.x - 2*buttonSize.x - 10);//cursorPosBeforeButton.x+400
 				ImGui::SetCursorPosY(cursorPosBeforeButton.y);
-				if (ImGui::Button(("Add Preset##AddPreset" + std::to_string(i)).c_str(), ImVec2(buttonSize.x*0.75, buttonSize.y))) {
+				if (ImGui::Button(("Add Preset##AddPreset" + std::to_string(i)).c_str(), ImVec2(buttonSize.x*0.90, buttonSize.y))) {
 					currentGroupIndex = i;
-					choicesBool = std::vector<int>(presets.size(), 0);
+					choicesBool = std::vector<bool>(presets.size(), false);
+					searchQuery.clear();
+					choices.clear();
 					showAddPresetWindow = true;
 				}
 				ImGui::SameLine();
-				if (ImGui::Button(("GroupOptions##" + std::to_string(i)).c_str(),buttonSize)) {
-					ImGui::OpenPopup(("GroupOptions##" + std::to_string(i)).c_str());
+				std::string popupId = "Options##" + std::to_string(i);
+				if (ImGui::Button(popupId.c_str(),buttonSize)) {
+					ImGui::OpenPopup(popupId.c_str());
 				}
+				if (ImGui::BeginPopup(popupId.c_str())) {
+					
+					if (ImGui::Button("WIP :)")) {
+						currentGroup = groups[i];
+					}
+					if (ImGui::Button("Edit")) {
+						showEditGroupWindow = true;
+						currentGroupIndex = i;
+						
+						choicesBool = std::vector<bool>(presets.size(), false);
+						searchQuery.clear();
+						choices.clear();
+						ImGui::CloseCurrentPopup();
+					}
 
+					if (ImGui::Button("Delete")) {
+						groups.erase(groups.begin() + i);
+						ImGui::CloseCurrentPopup();
+						
+					}
+
+					ImGui::EndPopup();
+				}
 				ImGui::SetCursorPos(cursorPosAfterButton);
 				
 
@@ -185,95 +220,216 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 
 
 	if (showAddPresetWindow && currentGroupIndex != -1) {
-		ImGui::SetNextWindowSize(ImVec2(400, 350));
-		ImGui::Begin("Add Preset", &showAddPresetWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
-		
-		ImGui::InputText("Search##SearchPreset", &searchQuery);
-
-		// convert ot lower case
-		std::string lowerSearchQuery = toLowerCase(searchQuery);
-
-		ImGui::BeginChild("PresetList", ImVec2(380, 250), true);
-		for (int i = 0; i < presets.size(); i++) {
-
-			const auto & preset = presets[i];
-		/*}
-		for (const auto& preset : presets) {*/
-
-			//
-			if (lowerSearchQuery.empty() || toLowerCase(preset.name).find(lowerSearchQuery) != std::string::npos) {
-
-				bool presetInGroup = false;
-				for (const auto& groupPreset : groups[currentGroupIndex].second) {
-					if (groupPreset.id == preset.id) {
-						presetInGroup = true;
-						break;
-					}
-				}
-				
-				if (!multiSelect) {
-					if (!presetInGroup) {
-						ImGuiIO& io = ImGui::GetIO();
-						float originalFontSize = io.FontGlobalScale; // Save the current font scale
-						io.FontGlobalScale = 1.5f;
-
-						if (ImGui::Selectable(preset.name.c_str())) {
-							groups[currentGroupIndex].second.push_back(preset);
-							showAddPresetWindow = false;
-						}
-						io.FontGlobalScale = originalFontSize;
-					}
-				}
-				else {
-					auto selectedPreset = choices.find(preset.name); //choices.find(preset.name);
-
-					if (!presetInGroup) {
-						// Check if the selectable item is selected or deselected
-						bool checkboxState = choicesBool[i];//false;
-						if (ImGui::Checkbox(preset.name.c_str(), reinterpret_cast<bool*>(&choicesBool[i]))) {
-							if (choicesBool[i]) {
-								choices[preset.name] = preset;
-							}
-							else {
-								choices.erase(preset.name);
-							}	
-						
-						
-						}
-						
-					}
-
-				}
-
-				
-			}
-		}
-		ImGui::EndChild();
-
-		if (!multiSelect) {
-			if (ImGui::Button("Multi Select")) {
-				multiSelect = !multiSelect;
-			}
-		}
-		else {
-			if (ImGui::Button("Single Select")) {
-				multiSelect = !multiSelect;
-			}
-		}
-		ImGui::SameLine();
-		if(ImGui::Button("Closee")) showAddPresetWindow = false;
-		ImGui::SameLine();
-		if (multiSelect) {
-			if (ImGui::Button("Add")) {
-				for (auto& [key, value] : choices) {
-					groups[currentGroupIndex].second.push_back(value);
-				}
-				showAddPresetWindow = false;
-
-			}
-		}
-		ImGui::End();
+		addPresetWindow();
 	}
 
+	if (showEditGroupWindow && currentGroupIndex != -1) {
+		editGroupWindow();
+	}
 	
+}
+void OrganizeMyBakkesModGarage::editGroupWindow() {
+	ImGui::SetNextWindowSize(ImVec2(400, 350));
+
+	ImGui::Begin("Edit Group", &showEditGroupWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+	ImGui::InputTextWithHint("##InputWithHint", "Enter a new name for this group", &groups[currentGroupIndex].first);
+	/*ImGui::InputText("Search##SearchPreset", &searchQuery);*/
+	ImGui::InputTextWithHint("##SearchPreset", "Search Presets", &searchQuery);
+	//ImGui::InputTextWithHint("##GroupName", "Search Groups", &queriedGroupName);
+	std::string lowerSearchQuery = toLowerCase(searchQuery);
+
+	ImGui::BeginChild("PresetList", ImVec2(380, 250), true);
+	ImVec2 availSpaceAdd = ImGui::GetContentRegionAvail();
+	if (lowerSearchQuery.empty()) {
+		for (size_t j = 0; j < groups[currentGroupIndex].second.size(); ++j) {
+			const auto& preset = groups[currentGroupIndex].second[j];
+			
+			if (choicesBool[j]) {
+				bool tempBool = choicesBool[j];
+				if (ImGui::Checkbox(preset.name.c_str(),&tempBool)) {
+					choicesBool[j] = tempBool;
+					if (choicesBool[j]) {
+						LOG("Added: %s from choices map in edit", preset.name.c_str());
+						choices[preset.name] = preset;
+					}
+					else {
+						choices.erase(preset.name);
+						LOG("Erased: %s from choices map in edit", preset.name.c_str());
+					}
+				}
+			}
+		}
+		ImGui::Separator();
+	}
+	for (size_t j = 0; j < groups[currentGroupIndex].second.size(); ++j) {
+		
+
+		const auto& preset = groups[currentGroupIndex].second[j];
+		if (lowerSearchQuery.empty() || toLowerCase(preset.name).find(lowerSearchQuery) != std::string::npos) {
+			
+			if (lowerSearchQuery.empty() &&choicesBool[j]) continue;
+			bool tempBool = choicesBool[j];
+			
+			if (ImGui::Checkbox(preset.name.c_str(), &tempBool)) {
+				choicesBool[j] = tempBool;
+				
+				if (choicesBool[j]) {
+					LOG("Added: %s from choices map in edit", preset.name.c_str());
+					choices[preset.name] = preset;
+				}
+				else {
+					choices.erase(preset.name);
+					LOG("Erased: %s from choices map in edit", preset.name.c_str());
+				}
+			}
+			
+				
+			
+		}
+	
+	}
+	ImGui::EndChild();
+
+	ImVec2 buttonSize = ImVec2(40, 20);
+	ImGui::SetCursorPosX(availSpaceAdd.x - (2 * buttonSize.x) - 10);
+	if (ImGui::Button("Delete", buttonSize)) {
+		for (auto& [key, value] : choices) {
+			//groups[currentGroupIndex].second.push_back(value);
+			groups[currentGroupIndex].second.erase(std::remove_if(groups[currentGroupIndex].second.begin(), groups[currentGroupIndex].second.end(), [&value](const Preset& preset) {
+				return preset.id == value.id;
+				}), groups[currentGroupIndex].second.end());
+			choicesBool = std::vector<bool>(presets.size(), false);
+		}
+		choices.clear();
+		//showEditGroupWindow = false;
+	}
+
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(availSpaceAdd.x - (buttonSize.x));
+	if (ImGui::Button("Close", buttonSize)) showEditGroupWindow = false;
+
+	ImGui::End();
+
+}
+
+void OrganizeMyBakkesModGarage::addPresetWindow() {
+	ImGui::SetNextWindowSize(ImVec2(400, 350));
+
+	ImGui::Begin("Add Preset", &showAddPresetWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+
+	//ImGui::InputText("Search##SearchPreset", &searchQuery);
+	ImGui::InputTextWithHint("##SearchPreset", "Search Presets", &searchQuery);
+	std::string lowerSearchQuery = toLowerCase(searchQuery);
+
+	ImGui::BeginChild("PresetList", ImVec2(380, 250), true);
+	ImVec2 availSpaceAdd = ImGui::GetContentRegionAvail();
+	if (lowerSearchQuery.empty()) {
+		for (int i = 0; i < presets.size(); i++) {
+			const auto& preset = presets[i];
+			bool presetInGroup = false;
+
+			for (const auto& groupPreset : groups[currentGroupIndex].second) {
+				if (groupPreset.id == preset.id) {
+					presetInGroup = true;
+					break;
+				}
+			}
+
+			if (!presetInGroup && choicesBool[i]) {
+				bool tempBool = choicesBool[i];
+				if (ImGui::Checkbox(preset.name.c_str(), &tempBool)) {
+					choicesBool[i] = tempBool;
+					if (choicesBool[i]) {
+						LOG("Added: %s from choices map in edit", preset.name.c_str());
+						choices[preset.name] = preset;
+					}
+					else {
+						choices.erase(preset.name);
+						LOG("Erased: %s from choices map in edit", preset.name.c_str());
+					}
+				}
+			}
+		}
+		ImGui::Separator();
+	}
+	for (int i = 0; i < presets.size(); i++) {
+		//if (choicesBool[i]) continue;
+		const auto& preset = presets[i];
+
+		if (lowerSearchQuery.empty() || toLowerCase(preset.name).find(lowerSearchQuery) != std::string::npos) {
+			
+			if (lowerSearchQuery.empty() && choicesBool[i]) continue;
+			bool presetInGroup = false;
+			for (const auto& groupPreset : groups[currentGroupIndex].second) {
+				if (groupPreset.id == preset.id) {
+					presetInGroup = true;
+					break;
+				}
+			}
+
+			if (!presetInGroup) {
+				if (!multiSelect) {
+					ImGuiIO& io = ImGui::GetIO();
+					float originalFontSize = io.FontGlobalScale;
+					io.FontGlobalScale = 1.5f;
+
+					if (ImGui::Selectable(preset.name.c_str())) {
+						groups[currentGroupIndex].second.push_back(preset);
+						showAddPresetWindow = false;
+						multiSelect = false;
+					}
+					io.FontGlobalScale = originalFontSize;
+				}
+				else {
+					bool tempBool = choicesBool[i];
+					if (ImGui::Checkbox(preset.name.c_str(), &tempBool)) {
+						choicesBool[i] = tempBool; 
+						if (choicesBool[i]) {
+							choices[preset.name] = preset;
+						}
+						else {
+							choices.erase(preset.name);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ImGui::EndChild();
+
+	// Toggle between multi and ingle
+	if (!multiSelect) {
+		if (ImGui::Button("Multi Select")) {
+			multiSelect = !multiSelect;
+		}
+	}
+	else {
+		if (ImGui::Button("Single Select")) {
+			multiSelect = !multiSelect;
+			choicesBool = std::vector<bool>(presets.size(), false);
+			choices.clear();
+		}
+	}
+	ImGui::SameLine();
+	//
+
+	ImVec2 buttonSize = ImVec2(40, 20);
+	ImGui::SetCursorPosX(availSpaceAdd.x - (2 * buttonSize.x) - 10);
+
+	if (ImGui::Button("Close", buttonSize)) {
+		showAddPresetWindow = false;
+		multiSelect = false;
+	}
+	ImGui::SameLine();
+	ImGui::SetCursorPosX(availSpaceAdd.x - (buttonSize.x));
+	if (multiSelect && ImGui::Button("Add", buttonSize)) {
+		for (auto& [key, value] : choices) {
+			groups[currentGroupIndex].second.push_back(value);
+		}
+		showAddPresetWindow = false;
+		multiSelect = false;
+	}
+	ImGui::End();
+
 }

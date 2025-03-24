@@ -17,6 +17,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <unordered_map>
+#include <time.h>
 #include "version.h"
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);
 
@@ -26,6 +27,11 @@ class Preset {
 	std::string id;
 };
 
+class PresetGroup {
+	public:
+	std::string name;
+	std::vector<Preset> presets;
+};
 
 class GuiFeatureBase;
 
@@ -36,18 +42,24 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 
 	std::vector<std::pair<std::string, std::vector<Preset>>> groups;
 	std::unordered_map<std::string,Preset>choices;
-	std::vector<int>choicesBool;
+	std::vector<bool>choicesBool;//stupid bool vector optimization means i cant access the bool's address
+
+	bool * boolArray = nullptr;
 	
 	std::string newGroupName;
 	std::string queriedGroupName;
 	std::vector<std::string> sortOptions = { "Name", "Date", "Size" };
 	int currentSortOption = 0;
+	bool sortDirection = true;
+	int pastSortOption = 0;
 	std::vector<Preset> presets;
 	bool showAddPresetWindow = false;
+	bool showEditGroupWindow = false;
 	bool multiSelect = false;
 	int currentGroupIndex = -1;
 	std::string searchQuery;
 
+	std::pair<std::string, std::vector<Preset>> currentGroup;
 
 	std::filesystem::path groupFilePath;
 
@@ -75,7 +87,8 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 
 	std::vector<std::shared_ptr<GuiFeatureBase>> gui_features_;
 	std::string toLowerCase(const std::string& str);
-
+	void addPresetWindow();
+	void editGroupWindow();
 
 
 public:
@@ -83,4 +96,5 @@ public:
 	void RenderSettings() override; // Uncomment if you wanna render your own tab in the settings menu
 	void RenderWindow() override; // Uncomment if you want to render your own plugin window
 	void OnClose() override;
+	void OnOpen() override;
 };
