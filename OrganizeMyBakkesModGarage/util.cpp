@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "OrganizeMyBakkesModGarage.h"
-
+#include <regex>
 
 void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& filePath) {
 
@@ -112,3 +112,37 @@ std::string OrganizeMyBakkesModGarage::toLowerCase(const std::string& str) {
 		[](unsigned char c) { return std::tolower(c); });
 	return lowerStr;
 }
+
+
+void  OrganizeMyBakkesModGarage::readCurrentBakkesModPreset(const std::string& file_path) {
+	const char* appdata = std::getenv("APPDATA");
+	if (appdata == nullptr) {
+		std::cerr << "Failed to get APPDATA environment variable\n";
+		return;
+	}
+	std::string path = std::string(appdata) + "\\bakkesmod\\bakkesmod\\" + file_path;
+	
+		LOG("Reading presets from: {}", path);
+
+
+	std::ifstream file(path);
+
+	if (!file.is_open()) {
+		std::cerr << "Failed to open file: " << path << std::endl;
+		return ;
+	}
+
+	std::string line;
+	std::regex codeRegex(R"(cl_itemmod_code\s+\"([^\"]+)\")");
+
+	while (std::getline(file, line)) {
+		std::smatch match;
+		if (std::regex_search(line, match, codeRegex) && match.size() > 1) {
+			currentBakkesModPreset = match[1].str(); 
+			LOG("Current BakkesMod preset: {}", currentBakkesModPreset);
+			 return;
+		}
+	}
+
+	std::cerr << "cl_itemmod_code not found in the file." << std::endl;
+}	

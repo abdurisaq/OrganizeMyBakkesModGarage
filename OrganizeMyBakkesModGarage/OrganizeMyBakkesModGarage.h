@@ -60,6 +60,9 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	std::string searchQuery;
 
 	std::pair<std::string, std::vector<Preset>> currentGroup;
+	std::string currentBakkesModPreset;
+	bool shuffleInFreeplay = false;
+	bool shuffleInOnlineGame = false;
 
 	std::filesystem::path groupFilePath;
 
@@ -69,6 +72,8 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	//Boilerplate
 	void onLoad() override;
 	std::vector<Preset> readPresets(const std::string& file_path);
+	void readCurrentBakkesModPreset(const std::string& file_path);
+
 
 	void onUnload() override; // Uncomment and implement if you need a unload method
 	void SaveGroupsToFile(const std::filesystem::path& filePath);

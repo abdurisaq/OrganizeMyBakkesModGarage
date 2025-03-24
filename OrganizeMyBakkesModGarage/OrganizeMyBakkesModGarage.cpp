@@ -25,34 +25,103 @@ void OrganizeMyBakkesModGarage::onLoad()
 			}
 		}, "Displays the window for bakkes garage.", PERMISSION_ALL
 	);
-
+	readCurrentBakkesModPreset("cfg\\config.cfg");
 	
 
 	std::filesystem::path myDataFolder = gameWrapper->GetDataFolder() / "OrganizeMyBakkesModGarage";
 	groupFilePath = myDataFolder / "groups.txt";
 	LoadGroupsFromFile(groupFilePath);
 
-
-	
-	gameWrapper->HookEvent("Function TAGame.LoadingScreen_TA.HandlePreLoadMap",			// Hooked event runs immediately before menu screen loaded.
-		[this](std::string eventName) {
-			/*ServerWrapper sw = gameWrapper->GetCurrentGameState();
-			if (!sw) return;
-			if (gameWrapper->IsInGame()) {
-				LOG("In game, saving groups to file.");
-
-			}*/
-			int randomFromGroup = currentGroup.second.size() > 0 ? rand() % currentGroup.second.size() : 0;
-			std::string command = "sleep 1;cl_itemmod_code " + currentGroup.second[randomFromGroup].id;
-			LOG("Executing preset swap");
-			gameWrapper->Execute([this, command](GameWrapper* gw) {
-				cvarManager->executeCommand(command, false);
-				});
-			//currentGroup
-			
-
+	//TAGame.Mutator_Freeplay_TA.Init
+	gameWrapper->HookEvent("Function TAGame.Mutator_Freeplay_TA.Init", [this](std::string eventName) {
+		if (currentGroup.first.empty()) return;
+		if (!shuffleInFreeplay) {
+			LOG("Not shuffling in freeplay");
+			return;
 		}
-	);
+		//readCurrentBakkesModPreset("cfg\\config.cfg");
+		LOG("Found current preset: {}", currentBakkesModPreset);
+		std::string idChoice = currentBakkesModPreset;
+		while (idChoice == currentBakkesModPreset) {
+			int randomFromGroup = currentGroup.second.size() > 0 ? rand() % currentGroup.second.size() : 0;
+			idChoice = currentGroup.second[randomFromGroup].id;
+		}
+
+
+		std::string command = "sleep 1;cl_itemmod_code " + idChoice;
+		LOG("Executing preset swap");
+		gameWrapper->Execute([this, command](GameWrapper* gw) {
+			cvarManager->executeCommand(command, false);
+			});
+		currentBakkesModPreset = idChoice;
+
+
+
+		});
+
+	gameWrapper->HookEvent("Function TAGame.OnlineGameJoinGame_TA.GetLoadout", [this](std::string eventName) {
+		if (currentGroup.first.empty()) return;
+		if (!shuffleInOnlineGame) {
+			LOG("Not shuffling in online game");
+			return;
+		}
+		//readCurrentBakkesModPreset("cfg\\config.cfg");
+		LOG("Found current preset: {}", currentBakkesModPreset);
+		std::string idChoice = currentBakkesModPreset;
+		while (idChoice == currentBakkesModPreset) {
+			int randomFromGroup = currentGroup.second.size() > 0 ? rand() % currentGroup.second.size() : 0;
+			idChoice = currentGroup.second[randomFromGroup].id;
+		}
+
+
+		std::string command = "sleep 1;cl_itemmod_code " + idChoice;
+		LOG("Executing preset swap");
+		gameWrapper->Execute([this, command](GameWrapper* gw) {
+			cvarManager->executeCommand(command, false);
+			});
+		currentBakkesModPreset = idChoice;
+
+
+
+		});
+
+
+	//gameWrapper->HookEvent("Function TAGame.LoadingScreen_TA.HandlePreLoadMap",			
+	//	[this](std::string eventName) {
+	//		/*ServerWrapper sw = gameWrapper->GetCurrentGameState();
+	//		if (!sw) return;
+	//		if (gameWrapper->IsInGame()) {
+	//			LOG("In game, saving groups to file.");
+
+	//		}*/
+	//		if(currentGroup.first.empty()) return;
+	//		if (!shuffleInFreeplay && gameWrapper->IsInFreeplay()) {
+	//			LOG("Not shuffling in freeplay");
+	//			return;
+	//		}
+	//		if (!shuffleInOnlineGame && gameWrapper->IsInOnlineGame()) {
+	//			LOG("Not shuffling in online game");
+	//			return;
+	//		}
+	//		readCurrentBakkesModPreset("cfg\\config.cfg");
+	//		LOG("Found current preset: {}", currentBakkesModPreset);	
+	//		std::string idChoice = currentBakkesModPreset;
+	//		while (idChoice == currentBakkesModPreset) {
+	//			int randomFromGroup = currentGroup.second.size() > 0 ? rand() % currentGroup.second.size() : 0;
+	//			idChoice = currentGroup.second[randomFromGroup].id;
+	//		}
+
+	//		
+	//		std::string command = "sleep 1;cl_itemmod_code " + idChoice;
+	//		LOG("Executing preset swap");
+	//		gameWrapper->Execute([this, command](GameWrapper* gw) {
+	//			cvarManager->executeCommand(command, false);
+	//			});
+	//		//currentGroup
+	//		
+
+	//	}
+	//);
 
 	
 

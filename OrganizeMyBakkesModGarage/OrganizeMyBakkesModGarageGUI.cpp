@@ -15,6 +15,22 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		bind_key = input_buffer;
 		LOG("Key bind changed to: {}", input_buffer);
 	}
+	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
+	ImGui::Checkbox("Shuffle in Online Game", &shuffleInOnlineGame);
+	ImGui::Text("Main preset group selected");
+	if (currentGroup.first.empty()) {
+		ImGui::Text("No group selected");
+	}
+	else {
+		if (ImGui::TreeNodeEx(currentGroup.first.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_CollapsingHeader)) {
+			for (const auto preset : currentGroup.second) {
+				ImGui::Text(preset.name.c_str());
+			}
+		}
+	}
+	
+	
+	
 
 
 
@@ -153,6 +169,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 							gameWrapper->Execute([this, command](GameWrapper* gw) {
 								cvarManager->executeCommand(command, false);
 								});
+							currentBakkesModPreset = preset.id;
 						}
 
 						/*ImGui::SameLine();
@@ -186,8 +203,11 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				}
 				if (ImGui::BeginPopup(popupId.c_str())) {
 					
-					if (ImGui::Button("WIP :)")) {
+					std::string buttonLabel = "Set as Main";
+					if(currentGroup.first == groups[i].first) buttonLabel = "Main";
+					if (ImGui::Button(buttonLabel.c_str())) {
 						currentGroup = groups[i];
+						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::Button("Edit")) {
 						showEditGroupWindow = true;
@@ -206,6 +226,10 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 					}
 
 					ImGui::EndPopup();
+				}
+				if (currentGroup.first == groups[i].first) {
+					ImGui::SameLine();
+					ImGui::Text("*");
 				}
 				ImGui::SetCursorPos(cursorPosAfterButton);
 				
