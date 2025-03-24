@@ -200,5 +200,3 @@ void OrganizeMyBakkesModGarage::OnClose()
 	SaveGroupsToFile(groupFilePath);
 	LOG("Groups saved to file on window close.");
 }
-
-

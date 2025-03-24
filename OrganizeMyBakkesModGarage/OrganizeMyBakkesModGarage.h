@@ -16,6 +16,7 @@
 #include <map>
 #include <iostream>
 #include <cstdlib>
+#include <unordered_map>
 #include "version.h"
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);
 
@@ -34,9 +35,16 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 {
 
 	std::vector<std::pair<std::string, std::vector<Preset>>> groups;
+	std::unordered_map<std::string,Preset>choices;
+	std::vector<int>choicesBool;
+	
 	std::string newGroupName;
+	std::string queriedGroupName;
+	std::vector<std::string> sortOptions = { "Name", "Date", "Size" };
+	int currentSortOption = 0;
 	std::vector<Preset> presets;
 	bool showAddPresetWindow = false;
+	bool multiSelect = false;
 	int currentGroupIndex = -1;
 	std::string searchQuery;
 
@@ -67,6 +75,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 
 	std::vector<std::shared_ptr<GuiFeatureBase>> gui_features_;
 	std::string toLowerCase(const std::string& str);
+
 
 
 public:
