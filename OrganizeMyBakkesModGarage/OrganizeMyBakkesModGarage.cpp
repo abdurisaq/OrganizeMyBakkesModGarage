@@ -2,7 +2,7 @@
 #include "OrganizeMyBakkesModGarage.h"
 
 
-BAKKESMOD_PLUGIN(OrganizeMyBakkesModGarage, "write a plugin description here", plugin_version, PLUGINTYPE_FREEPLAY)
+BAKKESMOD_PLUGIN(OrganizeMyBakkesModGarage, "Organize BM Presets", plugin_version, PLUGINTYPE_FREEPLAY)
 
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
