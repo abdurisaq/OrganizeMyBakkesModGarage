@@ -39,6 +39,10 @@ class PresetGroup {
 		this->presets = presets;
 		timeModified = time(0);
 	}
+	PresetGroup(std::vector<Preset> presets, time_t timestamp) {
+		this->presets = presets;
+		timeModified = timestamp;
+	}
 };
 
 class GuiFeatureBase;
@@ -107,6 +111,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	void decodePresetId(const std::string& presetId);
 	void validateCorrectCarBody(BMLoadout loadout);
 	void check();
+	void reSortGroups();
 
 
 public:

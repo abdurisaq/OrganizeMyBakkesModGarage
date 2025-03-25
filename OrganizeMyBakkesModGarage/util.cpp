@@ -3,7 +3,6 @@
 #include <regex>
 
 void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& filePath) {
-
 	std::filesystem::create_directories(filePath.parent_path());
 
 	std::ofstream outFile(filePath);
@@ -13,8 +12,8 @@ void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& fi
 	}
 
 	for (const auto& group : groups) {
-		// Write group name
-		outFile << group.first << ":\n";  // group.first is the group name
+		// Write group name and timestamp
+		outFile << group.first << " (Modified: " << group.second.timeModified << "):\n";
 
 		// Write presets in the group
 		for (const auto& preset : group.second.presets) {
@@ -38,23 +37,35 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 	std::string line;
 	std::string currentGroupName;
 	std::vector<Preset> currentPresets;
+	time_t currentTimestamp = time(nullptr);
 
 	while (std::getline(inFile, line)) {
 		if (line.empty()) continue;
 
-		// If it's a group name line (e.g., "GroupName:")
+		// Extract group name and timestamp using regex or parsing
 		if (line.back() == ':') {
 			if (!currentGroupName.empty()) {
-				// Save the previous group if it exists
-				groups.push_back({ currentGroupName, PresetGroup(currentPresets)});
+				// Save the previous group
+				groups.push_back({ currentGroupName, PresetGroup(currentPresets, currentTimestamp) });
 			}
 
-			currentGroupName = line.substr(0, line.size() - 1);  // Remove the ":"
+			// Parse the group name and timestamp
+			size_t pos = line.find(" (Modified: ");
+			if (pos != std::string::npos) {
+				currentGroupName = line.substr(0, pos);
+				std::string timestampStr = line.substr(pos + 11, line.size() - pos - 12);
+				currentTimestamp = std::stol(timestampStr);
+			}
+			else {
+				currentGroupName = line.substr(0, line.size() - 1); // Remove ":"
+				currentTimestamp = time(nullptr);
+			}
+
 			currentPresets.clear();
 		}
-		// If it's a preset line (e.g., "    - PresetName: preset_id")
+		// Parse preset data
 		else if (line.find("    - ") == 0) {
-			std::string presetLine = line.substr(6);  
+			std::string presetLine = line.substr(6);
 			std::istringstream ss(presetLine);
 			std::string presetName, presetId;
 			if (std::getline(ss, presetName, ':') && std::getline(ss, presetId)) {
@@ -64,14 +75,13 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 	}
 
 	if (!currentGroupName.empty()) {
-		groups.push_back({ currentGroupName, PresetGroup(currentPresets) });
+		groups.push_back({ currentGroupName, PresetGroup(currentPresets, currentTimestamp) });
 	}
 
 	inFile.close();
 	std::cout << "Groups loaded from file: " << filePath << std::endl;
-
-
 }
+
 std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& file_path) {
 	const char* appdata = std::getenv("APPDATA");
 	if (appdata == nullptr) {
@@ -145,3 +155,41 @@ void  OrganizeMyBakkesModGarage::readCurrentBakkesModPreset(const std::string& f
 
 	std::cerr << "cl_itemmod_code not found in the file." << std::endl;
 }	
+
+
+void OrganizeMyBakkesModGarage::reSortGroups() {
+
+	bool direction = sortDirection;
+
+	switch (currentSortOption) {
+	case 0:
+		std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
+			if (direction) {
+				return a.first < b.first;
+			}
+			return a.first > b.first;
+			});
+		break;
+	case 1:
+		std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
+			if (direction) {
+				return a.second.timeModified < b.second.timeModified;
+			}
+			return a.second.timeModified > b.second.timeModified;
+			});
+
+		break;
+
+	case 2:
+		std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
+			if (direction) {
+				return a.second.presets.size() > b.second.presets.size();
+			}
+			return a.second.presets.size() < b.second.presets.size();
+			});
+		break;
+
+	}
+	pastSortOption = currentSortOption;
+
+}

@@ -73,7 +73,8 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				if (currentSortOption == pastSortOption) {
 					sortDirection = !sortDirection;
 				}
-				bool direction = sortDirection;
+				reSortGroups();
+				/*bool direction = sortDirection;
 				switch(currentSortOption) {
 				case 0:
 					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
@@ -103,7 +104,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 					break;
 
 				}
-				pastSortOption = currentSortOption;
+				pastSortOption = currentSortOption;*/
 			}
 		}
 		ImGui::EndPopup();
