@@ -90,7 +90,7 @@ std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& fi
 	}
 	std::string path = std::string(appdata) + "\\bakkesmod\\bakkesmod\\" + file_path;
 
-	LOG("Reading presets from: {}", path);
+	//LOG("Reading presets from: {}", path);
 
 	std::vector<Preset> presets;
 
@@ -131,7 +131,7 @@ void  OrganizeMyBakkesModGarage::readCurrentBakkesModPreset(const std::string& f
 	}
 	std::string path = std::string(appdata) + "\\bakkesmod\\bakkesmod\\" + file_path;
 	
-		LOG("Reading presets from: {}", path);
+		//LOG("Reading presets from: {}", path);
 
 
 	std::ifstream file(path);
@@ -148,7 +148,7 @@ void  OrganizeMyBakkesModGarage::readCurrentBakkesModPreset(const std::string& f
 		std::smatch match;
 		if (std::regex_search(line, match, codeRegex) && match.size() > 1) {
 			currentBakkesModPreset = match[1].str(); 
-			LOG("Current BakkesMod preset: {}", currentBakkesModPreset);
+			//LOG("Current BakkesMod preset: {}", currentBakkesModPreset);
 			 return;
 		}
 	}

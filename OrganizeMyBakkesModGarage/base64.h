@@ -37,9 +37,9 @@ static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
 
 static inline bool is_base64(unsigned char c) {
 	bool is_base64 = (isalnum(c) || (c == '+') || (c == '/'));
-	if (!is_base64) {
+	/*if (!is_base64) {
 		LOG("Invalid character in base64 string: {}", c);
-	}
+	}*/
 	return (isalnum(c) || (c == '+') || (c == '/'));
 }
 

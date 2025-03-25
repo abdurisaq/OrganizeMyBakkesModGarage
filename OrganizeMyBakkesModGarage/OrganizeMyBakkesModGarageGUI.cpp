@@ -13,7 +13,7 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		cvarManager->removeBind(bind_key);
 		cvarManager->setBind(input_buffer, "open_organizemybakkesmodgarage_ui");
 		bind_key = input_buffer;
-		LOG("Key bind changed to: {}", input_buffer);
+		//LOG("Key bind changed to: {}", input_buffer);
 	}
 	ImGui::Checkbox("Swap car body capability", &swapCarBodyCapability);
 	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
@@ -285,12 +285,12 @@ void OrganizeMyBakkesModGarage::editGroupWindow() {
 				if (ImGui::Checkbox(preset.name.c_str(),&tempBool)) {
 					choicesBool[j] = tempBool;
 					if (choicesBool[j]) {
-						LOG("Added: %s from choices map in edit", preset.name.c_str());
+						//LOG("Added: %s from choices map in edit", preset.name.c_str());
 						choices[preset.name] = preset;
 					}
 					else {
 						choices.erase(preset.name);
-						LOG("Erased: %s from choices map in edit", preset.name.c_str());
+						//LOG("Erased: %s from choices map in edit", preset.name.c_str());
 					}
 				}
 			}
@@ -310,12 +310,12 @@ void OrganizeMyBakkesModGarage::editGroupWindow() {
 				choicesBool[j] = tempBool;
 				
 				if (choicesBool[j]) {
-					LOG("Added: %s from choices map in edit", preset.name.c_str());
+					//LOG("Added: %s from choices map in edit", preset.name.c_str());
 					choices[preset.name] = preset;
 				}
 				else {
 					choices.erase(preset.name);
-					LOG("Erased: %s from choices map in edit", preset.name.c_str());
+					//LOG("Erased: %s from choices map in edit", preset.name.c_str());
 				}
 			}
 			
@@ -326,9 +326,9 @@ void OrganizeMyBakkesModGarage::editGroupWindow() {
 	}
 	ImGui::EndChild();
 
-	ImVec2 buttonSize = ImVec2(40, 20);
+	ImVec2 buttonSize = ImVec2(45, 20);
 	ImGui::SetCursorPosX(availSpaceAdd.x - (2 * buttonSize.x) - 10);
-	if (ImGui::Button("Delete", buttonSize)) {
+	if (ImGui::Button("Delete ", buttonSize)) {
 		for (auto& [key, value] : choices) {
 			//groups[currentGroupIndex].second.push_back(value);
 			groups[currentGroupIndex].second.presets.erase(std::remove_if(groups[currentGroupIndex].second.presets.begin(), groups[currentGroupIndex].second.presets.end(), [&value](const Preset& preset) {
@@ -377,12 +377,12 @@ void OrganizeMyBakkesModGarage::addPresetWindow() {
 				if (ImGui::Checkbox(preset.name.c_str(), &tempBool)) {
 					choicesBool[i] = tempBool;
 					if (choicesBool[i]) {
-						LOG("Added: %s from choices map in edit", preset.name.c_str());
+						//LOG("Added: %s from choices map in edit", preset.name.c_str());
 						choices[preset.name] = preset;
 					}
 					else {
 						choices.erase(preset.name);
-						LOG("Erased: %s from choices map in edit", preset.name.c_str());
+						//LOG("Erased: %s from choices map in edit", preset.name.c_str());
 					}
 				}
 			}
