@@ -15,9 +15,9 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		bind_key = input_buffer;
 		LOG("Key bind changed to: {}", input_buffer);
 	}
-	/*if (ImGui::Button("Check")) {
-		decodePresetId(currentBakkesModPreset);
-	}*/
+	if (ImGui::Button("Check")) {
+		check();
+	}
 	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
 	ImGui::Checkbox("Shuffle in Online Game", &shuffleInOnlineGame);
 	ImGui::Text("Main preset group selected");
@@ -175,6 +175,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 								});
 							currentBakkesModPreset = preset.id;
 						}
+						/*ImGui::Text(preset.id.c_str());*/
 
 						/*ImGui::SameLine();
 						if (ImGui::Button(("Delete##" + std::to_string(i) + std::to_string(j)).c_str())) {

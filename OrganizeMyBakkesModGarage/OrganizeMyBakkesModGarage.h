@@ -97,6 +97,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	void editGroupWindow();
 	void decodePresetId(const std::string& presetId);
 	void validateCorrectCarBody(BMLoadout loadout);
+	void check();
 
 
 public:
