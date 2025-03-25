@@ -62,14 +62,14 @@ void OrganizeMyBakkesModGarage::onLoad()
 
 		});
 
-	gameWrapper->HookEvent("Function TAGame.OnlineGameJoinGame_TA.GetLoadout", [this](std::string eventName) {
+	
+	gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", [this](std::string eventName) {
 		if (currentGroup.first.empty()) return;
+		//if (gameWrapper->IsInOnlineGame())return;
 		if (!shuffleInOnlineGame) {
 			//LOG("Not shuffling in online game");
 			return;
 		}
-		//readCurrentBakkesModPreset("cfg\\config.cfg");
-		//LOG("Found current preset: {}", currentBakkesModPreset);
 		std::string idChoice = currentBakkesModPreset;
 		while (idChoice == currentBakkesModPreset) {
 			int randomFromGroup = currentGroup.second.presets.size() > 0 ? rand() % currentGroup.second.presets.size() : 0;
@@ -79,15 +79,42 @@ void OrganizeMyBakkesModGarage::onLoad()
 
 		std::string command = "sleep 1;cl_itemmod_code " + idChoice;
 		//LOG("Executing preset swap");
+		if (swapCarBodyCapability) {
+			decodePresetId(idChoice);
+		}
+		gameWrapper->Execute([this, command](GameWrapper* gw) {
+			cvarManager->executeCommand(command, false);
+			});
+		currentBakkesModPreset = idChoice;
+		
+		});
+	gameWrapper->HookEvent("Function TAGame.GFxShell_TA.LeaveMatch", [this](std::string eventName) {
+		if (currentGroup.first.empty()) return;
+		//if (gameWrapper->IsInOnlineGame())return;
+		if (!shuffleInOnlineGame) {
+			//LOG("Not shuffling in online game");
+			return;
+		}
+		std::string idChoice = currentBakkesModPreset;
+		while (idChoice == currentBakkesModPreset) {
+			int randomFromGroup = currentGroup.second.presets.size() > 0 ? rand() % currentGroup.second.presets.size() : 0;
+			idChoice = currentGroup.second.presets[randomFromGroup].id;
+		}
+
+
+		std::string command = "sleep 1;cl_itemmod_code " + idChoice;
+		//LOG("Executing preset swap");
+		if (swapCarBodyCapability) {
+			decodePresetId(idChoice);
+		}
 		gameWrapper->Execute([this, command](GameWrapper* gw) {
 			cvarManager->executeCommand(command, false);
 			});
 		currentBakkesModPreset = idChoice;
 
-
-
 		});
 
+	
 
 	
 }
