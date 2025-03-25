@@ -24,7 +24,7 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 	}
 	else {
 		if (ImGui::TreeNodeEx(currentGroup.first.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_CollapsingHeader)) {
-			for (const auto preset : currentGroup.second) {
+			for (const auto preset : currentGroup.second.presets) {
 				ImGui::Text(preset.name.c_str());
 			}
 		}
@@ -76,7 +76,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				bool direction = sortDirection;
 				switch(currentSortOption) {
 				case 0:
-					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, std::vector<Preset>>& a, const std::pair<std::string, std::vector<Preset>>& b) {
+					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
 						if (direction) {
 							return a.first < b.first;
 						}
@@ -84,15 +84,21 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 						});
 					break;
 				case 1:
+					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
+						if (direction) {
+							return a.second.timeModified < b.second.timeModified;
+						}
+						return a.second.timeModified > b.second.timeModified;
+						});
 
 					break;
 
 				case 2:
-					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, std::vector<Preset>>& a, const std::pair<std::string, std::vector<Preset>>& b) {
+					std::sort(groups.begin(), groups.end(), [direction](const std::pair<std::string, PresetGroup>& a, const std::pair<std::string, PresetGroup>& b) {
 						if (direction) {
-							return a.second.size() > b.second.size();
+							return a.second.presets.size() > b.second.presets.size();
 						}
-						return a.second.size() < b.second.size();
+						return a.second.presets.size() < b.second.presets.size();
 						});
 					break;
 
@@ -110,7 +116,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 	if (ImGui::BeginPopup("CreateGroup")) {
 		ImGui::InputTextWithHint("##GroupName", "Enter new group name", &newGroupName);
 		if (ImGui::Button("Create")) {
-			groups.emplace_back(newGroupName, std::vector<Preset>{});
+			groups.emplace_back(newGroupName, PresetGroup());
 			newGroupName.clear();
 			ImGui::CloseCurrentPopup();
 		}
@@ -141,7 +147,7 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 				//ImGui::CollapsingHeader((groups[i].first + " (" + std::to_string(groups[i].second.size()) + " presets)").c_str())
 
 				
-				std::string headerLabel = groups[i].first + " (" + std::to_string(groups[i].second.size()) + " presets)";
+				std::string headerLabel = groups[i].first + " (" + std::to_string(groups[i].second.presets.size()) + " presets)";
 				
 				ImGui::SetNextItemWidth(200);
 				//ImGui::PushStyleVar(ImGuiStyleVar_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -157,8 +163,8 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 
 
 					ImGui::BeginChild("PresetListInGroup", ImVec2(groupWindowSize.x, childSize.y), true);
-					for (size_t j = 0; j < groups[i].second.size(); ++j) {
-						const auto& preset = groups[i].second[j];
+					for (size_t j = 0; j < groups[i].second.presets.size(); ++j) {
+						const auto& preset = groups[i].second.presets[j];
 						/*ImGui::Text(preset.name.c_str());*/
 
 						//ImGui::SameLine();
@@ -270,8 +276,8 @@ void OrganizeMyBakkesModGarage::editGroupWindow() {
 	ImGui::BeginChild("PresetList", ImVec2(380, 250), true);
 	ImVec2 availSpaceAdd = ImGui::GetContentRegionAvail();
 	if (lowerSearchQuery.empty()) {
-		for (size_t j = 0; j < groups[currentGroupIndex].second.size(); ++j) {
-			const auto& preset = groups[currentGroupIndex].second[j];
+		for (size_t j = 0; j < groups[currentGroupIndex].second.presets.size(); ++j) {
+			const auto& preset = groups[currentGroupIndex].second.presets[j];
 			
 			if (choicesBool[j]) {
 				bool tempBool = choicesBool[j];
@@ -290,10 +296,10 @@ void OrganizeMyBakkesModGarage::editGroupWindow() {
 		}
 		ImGui::Separator();
 	}
-	for (size_t j = 0; j < groups[currentGroupIndex].second.size(); ++j) {
+	for (size_t j = 0; j < groups[currentGroupIndex].second.presets.size(); ++j) {
 		
 
-		const auto& preset = groups[currentGroupIndex].second[j];
+		const auto& preset = groups[currentGroupIndex].second.presets[j];
 		if (lowerSearchQuery.empty() || toLowerCase(preset.name).find(lowerSearchQuery) != std::string::npos) {
 			
 			if (lowerSearchQuery.empty() &&choicesBool[j]) continue;
@@ -324,11 +330,12 @@ void OrganizeMyBakkesModGarage::editGroupWindow() {
 	if (ImGui::Button("Delete", buttonSize)) {
 		for (auto& [key, value] : choices) {
 			//groups[currentGroupIndex].second.push_back(value);
-			groups[currentGroupIndex].second.erase(std::remove_if(groups[currentGroupIndex].second.begin(), groups[currentGroupIndex].second.end(), [&value](const Preset& preset) {
+			groups[currentGroupIndex].second.presets.erase(std::remove_if(groups[currentGroupIndex].second.presets.begin(), groups[currentGroupIndex].second.presets.end(), [&value](const Preset& preset) {
 				return preset.id == value.id;
-				}), groups[currentGroupIndex].second.end());
+				}), groups[currentGroupIndex].second.presets.end());
 			choicesBool = std::vector<bool>(presets.size(), false);
 		}
+		groups[currentGroupIndex].second.timeModified = time(0);
 		choices.clear();
 		//showEditGroupWindow = false;
 	}
@@ -357,7 +364,7 @@ void OrganizeMyBakkesModGarage::addPresetWindow() {
 			const auto& preset = presets[i];
 			bool presetInGroup = false;
 
-			for (const auto& groupPreset : groups[currentGroupIndex].second) {
+			for (const auto& groupPreset : groups[currentGroupIndex].second.presets) {
 				if (groupPreset.id == preset.id) {
 					presetInGroup = true;
 					break;
@@ -389,7 +396,7 @@ void OrganizeMyBakkesModGarage::addPresetWindow() {
 			
 			if (lowerSearchQuery.empty() && choicesBool[i]) continue;
 			bool presetInGroup = false;
-			for (const auto& groupPreset : groups[currentGroupIndex].second) {
+			for (const auto& groupPreset : groups[currentGroupIndex].second.presets) {
 				if (groupPreset.id == preset.id) {
 					presetInGroup = true;
 					break;
@@ -403,7 +410,8 @@ void OrganizeMyBakkesModGarage::addPresetWindow() {
 					io.FontGlobalScale = 1.5f;
 
 					if (ImGui::Selectable(preset.name.c_str())) {
-						groups[currentGroupIndex].second.push_back(preset);
+						groups[currentGroupIndex].second.presets.push_back(preset);
+						groups[currentGroupIndex].second.timeModified = time(0);
 						showAddPresetWindow = false;
 						multiSelect = false;
 					}
@@ -454,8 +462,9 @@ void OrganizeMyBakkesModGarage::addPresetWindow() {
 	ImGui::SetCursorPosX(availSpaceAdd.x - (buttonSize.x));
 	if (multiSelect && ImGui::Button("Add", buttonSize)) {
 		for (auto& [key, value] : choices) {
-			groups[currentGroupIndex].second.push_back(value);
+			groups[currentGroupIndex].second.presets.push_back(value);
 		}
+		groups[currentGroupIndex].second.timeModified = time(0);
 		showAddPresetWindow = false;
 		multiSelect = false;
 	}

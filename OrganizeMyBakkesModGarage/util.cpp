@@ -17,7 +17,7 @@ void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& fi
 		outFile << group.first << ":\n";  // group.first is the group name
 
 		// Write presets in the group
-		for (const auto& preset : group.second) {
+		for (const auto& preset : group.second.presets) {
 			outFile << "    - " << preset.name << ": " << preset.id << "\n";
 		}
 
@@ -46,7 +46,7 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 		if (line.back() == ':') {
 			if (!currentGroupName.empty()) {
 				// Save the previous group if it exists
-				groups.push_back({ currentGroupName, currentPresets });
+				groups.push_back({ currentGroupName, PresetGroup(currentPresets)});
 			}
 
 			currentGroupName = line.substr(0, line.size() - 1);  // Remove the ":"
@@ -54,7 +54,7 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 		}
 		// If it's a preset line (e.g., "    - PresetName: preset_id")
 		else if (line.find("    - ") == 0) {
-			std::string presetLine = line.substr(6);  // Remove the "    - " part
+			std::string presetLine = line.substr(6);  
 			std::istringstream ss(presetLine);
 			std::string presetName, presetId;
 			if (std::getline(ss, presetName, ':') && std::getline(ss, presetId)) {
@@ -63,9 +63,8 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 		}
 	}
 
-	// Add the last group
 	if (!currentGroupName.empty()) {
-		groups.push_back({ currentGroupName, currentPresets });
+		groups.push_back({ currentGroupName, PresetGroup(currentPresets) });
 	}
 
 	inFile.close();

@@ -30,8 +30,15 @@ class Preset {
 
 class PresetGroup {
 	public:
-	std::string name;
 	std::vector<Preset> presets;
+	time_t timeModified;
+	PresetGroup() {
+		timeModified = time(0);
+	}
+	PresetGroup(std::vector<Preset> presets) {
+		this->presets = presets;
+		timeModified = time(0);
+	}
 };
 
 class GuiFeatureBase;
@@ -41,7 +48,8 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	,public PluginWindowBase // Uncomment if you want to render your own plugin window
 {
 
-	std::vector<std::pair<std::string, std::vector<Preset>>> groups;
+	//std::vector<std::pair<std::string, std::vector<Preset>>> groups;
+	std::vector<std::pair<std::string, PresetGroup>> groups;
 	std::unordered_map<std::string,Preset>choices;
 	std::vector<bool>choicesBool;//stupid bool vector optimization means i cant access the bool's address
 
@@ -60,7 +68,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	int currentGroupIndex = -1;
 	std::string searchQuery;
 
-	std::pair<std::string, std::vector<Preset>> currentGroup;
+	std::pair<std::string, PresetGroup> currentGroup;
 	std::string currentBakkesModPreset;
 	bool shuffleInFreeplay = false;
 	bool shuffleInOnlineGame = false;

@@ -43,8 +43,8 @@ void OrganizeMyBakkesModGarage::onLoad()
 		LOG("Found current preset: {}", currentBakkesModPreset);
 		std::string idChoice = currentBakkesModPreset;
 		while (idChoice == currentBakkesModPreset) {
-			int randomFromGroup = currentGroup.second.size() > 0 ? rand() % currentGroup.second.size() : 0;
-			idChoice = currentGroup.second[randomFromGroup].id;
+			int randomFromGroup = currentGroup.second.presets.size() > 0 ? rand() % currentGroup.second.presets.size() : 0;
+			idChoice = currentGroup.second.presets[randomFromGroup].id;
 		}
 
 
@@ -72,8 +72,8 @@ void OrganizeMyBakkesModGarage::onLoad()
 		LOG("Found current preset: {}", currentBakkesModPreset);
 		std::string idChoice = currentBakkesModPreset;
 		while (idChoice == currentBakkesModPreset) {
-			int randomFromGroup = currentGroup.second.size() > 0 ? rand() % currentGroup.second.size() : 0;
-			idChoice = currentGroup.second[randomFromGroup].id;
+			int randomFromGroup = currentGroup.second.presets.size() > 0 ? rand() % currentGroup.second.presets.size() : 0;
+			idChoice = currentGroup.second.presets[randomFromGroup].id;
 		}
 
 
