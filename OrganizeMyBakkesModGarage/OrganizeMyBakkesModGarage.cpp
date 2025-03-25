@@ -50,7 +50,9 @@ void OrganizeMyBakkesModGarage::onLoad()
 
 		std::string command = "sleep 1;cl_itemmod_code " + idChoice;
 		LOG("Executing preset swap");
-		decodePresetId(idChoice);
+		if (swapCarBodyCapability) {
+			decodePresetId(idChoice);
+		}
 		gameWrapper->Execute([this, command](GameWrapper* gw) {
 			cvarManager->executeCommand(command, false);
 			});

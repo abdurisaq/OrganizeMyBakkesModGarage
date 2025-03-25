@@ -15,9 +15,7 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		bind_key = input_buffer;
 		LOG("Key bind changed to: {}", input_buffer);
 	}
-	if (ImGui::Button("Check")) {
-		check();
-	}
+	ImGui::Checkbox("Swap car body capability", &swapCarBodyCapability);
 	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
 	ImGui::Checkbox("Shuffle in Online Game", &shuffleInOnlineGame);
 	ImGui::Text("Main preset group selected");
@@ -169,7 +167,9 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 							/*LOG("Executing preset: {}", preset.id.c_str());
 							
 							LOG("FULL COMMAND: {}", command.c_str());*/
-							decodePresetId(preset.id);
+							if (swapCarBodyCapability) {
+								decodePresetId(preset.id);
+							}
 							gameWrapper->Execute([this, command](GameWrapper* gw) {
 								cvarManager->executeCommand(command, false);
 								});

@@ -64,6 +64,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	std::string currentBakkesModPreset;
 	bool shuffleInFreeplay = false;
 	bool shuffleInOnlineGame = false;
+	bool swapCarBodyCapability = true;
 
 	std::filesystem::path groupFilePath;
 
