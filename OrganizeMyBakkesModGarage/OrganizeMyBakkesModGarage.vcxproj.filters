@@ -87,6 +87,12 @@
     <ClCompile Include="util.cpp">
       <Filter>Plugin\src</Filter>
     </ClCompile>
+    <ClCompile Include="PresetDecoding.cpp">
+      <Filter>Plugin\src</Filter>
+    </ClCompile>
+    <ClCompile Include="BakkesModLoadoutLib.cpp">
+      <Filter>Plugin\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imgui_rangeslider.h">
@@ -144,6 +150,15 @@
       <Filter>Plugin\header</Filter>
     </ClInclude>
     <ClInclude Include="GuiBase.h">
+      <Filter>Plugin\header</Filter>
+    </ClInclude>
+    <ClInclude Include="base64.h">
+      <Filter>Plugin\header</Filter>
+    </ClInclude>
+    <ClInclude Include="helper_classes.h">
+      <Filter>Plugin\header</Filter>
+    </ClInclude>
+    <ClInclude Include="bmloadout.h">
       <Filter>Plugin\header</Filter>
     </ClInclude>
   </ItemGroup>

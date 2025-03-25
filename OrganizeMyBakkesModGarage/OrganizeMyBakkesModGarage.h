@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <unordered_map>
 #include <time.h>
+#include "bmloadout.h"
 #include "version.h"
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);
 
@@ -94,6 +95,8 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	std::string toLowerCase(const std::string& str);
 	void addPresetWindow();
 	void editGroupWindow();
+	void decodePresetId(const std::string& presetId);
+	void validateCorrectCarBody(BMLoadout loadout);
 
 
 public:

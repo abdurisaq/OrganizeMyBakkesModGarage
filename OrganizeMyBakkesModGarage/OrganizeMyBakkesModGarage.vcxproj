@@ -91,6 +91,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BakkesModLoadoutLib.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imguivariouscontrols.cpp" />
     <ClCompile Include="imgui\imgui_additions.cpp" />
@@ -110,9 +111,13 @@
     </ClCompile>
     <ClCompile Include="OrganizeMyBakkesModGarage.cpp" />
     <ClCompile Include="GuiBase.cpp" />
+    <ClCompile Include="PresetDecoding.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base64.h" />
+    <ClInclude Include="bmloadout.h" />
+    <ClInclude Include="helper_classes.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="imgui\imguivariouscontrols.h" />

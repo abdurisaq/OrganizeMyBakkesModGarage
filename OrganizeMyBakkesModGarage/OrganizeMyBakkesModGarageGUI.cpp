@@ -15,6 +15,9 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		bind_key = input_buffer;
 		LOG("Key bind changed to: {}", input_buffer);
 	}
+	/*if (ImGui::Button("Check")) {
+		decodePresetId(currentBakkesModPreset);
+	}*/
 	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
 	ImGui::Checkbox("Shuffle in Online Game", &shuffleInOnlineGame);
 	ImGui::Text("Main preset group selected");
@@ -163,9 +166,10 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 						//ImGui::SameLine();
 						if (ImGui::Button(preset.name.c_str())) {//ImGui::Button(("Apply##" + std::to_string(i) + std::to_string(j)).c_str())
 							std::string command = "sleep 1;cl_itemmod_code " + preset.id;
-							LOG("Executing preset: %s", preset.id.c_str());
-							;
-
+							/*LOG("Executing preset: {}", preset.id.c_str());
+							
+							LOG("FULL COMMAND: {}", command.c_str());*/
+							decodePresetId(preset.id);
 							gameWrapper->Execute([this, command](GameWrapper* gw) {
 								cvarManager->executeCommand(command, false);
 								});
