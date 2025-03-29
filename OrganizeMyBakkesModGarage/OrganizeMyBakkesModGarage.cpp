@@ -27,6 +27,9 @@ void OrganizeMyBakkesModGarage::onLoad()
 	);
 	readCurrentBakkesModPreset("cfg\\config.cfg");
 	
+	readCurrentBinding();
+	LOG("Bind key: {}", bind_key);
+	
 
 	std::filesystem::path myDataFolder = gameWrapper->GetDataFolder() / "OrganizeMyBakkesModGarage";
 	groupFilePath = myDataFolder / "groups.txt";

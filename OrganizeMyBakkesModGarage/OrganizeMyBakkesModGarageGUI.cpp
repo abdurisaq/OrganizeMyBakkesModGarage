@@ -5,15 +5,16 @@
 void OrganizeMyBakkesModGarage::RenderSettings()
 {
 
-	static char input_buffer[16] = "F4";
-	ImGui::Text("Current binding: %s", bind_key);
-	ImGui::InputText("##bind_key", input_buffer, IM_ARRAYSIZE(input_buffer));
+	std::string binding = pastBinding;
+	ImGui::Text("Current binding: %s", binding.c_str());
+	ImGui::InputText("##bind_key", &bind_key);
 	ImGui::SameLine();
 	if (ImGui::Button("Set bind")) {
-		cvarManager->removeBind(bind_key);
-		cvarManager->setBind(input_buffer, "open_organizemybakkesmodgarage_ui");
-		bind_key = input_buffer;
-		//LOG("Key bind changed to: {}", input_buffer);
+		
+		cvarManager->removeBind(binding);
+		cvarManager->setBind(bind_key, "open_organizemybakkesmodgarage_ui");
+		pastBinding = bind_key;
+		
 	}
 	ImGui::Checkbox("Swap car body capability", &swapCarBodyCapability);
 	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
@@ -29,9 +30,6 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 			}
 		}
 	}
-	
-	
-	
 
 
 

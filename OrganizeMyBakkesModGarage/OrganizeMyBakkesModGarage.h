@@ -81,7 +81,9 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	std::filesystem::path groupFilePath;
 
 	//std::shared_ptr<bool> enabled;
-	std::string bind_key = "F4";
+	std::string pastBinding;
+	std::string bind_key;
+	void readCurrentBinding();
 	bool defaultHooked = false;
 	//Boilerplate
 	void onLoad() override;

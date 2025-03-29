@@ -4,7 +4,7 @@
 * Organize presets into groups for easy navigating
 ![Alt Text](/assets/adding.gif "Demo of adding to group.")
 
-* Edit existing groups
+* Edit existing groups\n
 ![Alt Text](/assets/editing.gif "demo of editing a group")
 
 * Sort groups by name, date and size in ascending and descending order

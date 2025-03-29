@@ -193,3 +193,38 @@ void OrganizeMyBakkesModGarage::reSortGroups() {
 	pastSortOption = currentSortOption;
 
 }
+
+
+void OrganizeMyBakkesModGarage::readCurrentBinding() {
+	const char* appdata = std::getenv("APPDATA");
+	if (appdata == nullptr) {
+		std::cerr << "Failed to get APPDATA environment variable\n";
+		return;
+	}
+	std::string path = std::string(appdata) + "\\bakkesmod\\bakkesmod\\" + "cfg\\binds.cfg";
+
+	std::ifstream file(path);
+
+	if (!file.is_open()) {
+		std::cerr << "Failed to open file: " << path << std::endl;
+		return;
+	}
+
+	std::string line;
+	std::regex pattern(R"(bind\s+(\S+)\s+\"open_organizemybakkesmodgarage_ui\")"); // Capture key
+
+	while (std::getline(file, line)) {
+		std::smatch match;
+		if (std::regex_search(line, match, pattern)) {
+			pastBinding = bind_key = match[1].str();
+			return ; 
+		}
+	}
+	//default
+	cvarManager->setBind("F4", "open_organizemybakkesmodgarage_ui");
+	pastBinding = bind_key = "F4";
+
+	return;
+
+
+}
