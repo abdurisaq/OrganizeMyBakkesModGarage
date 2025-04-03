@@ -6,6 +6,11 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 {
 
 	std::string binding = pastBinding;
+
+	if (!reloadedCurrentGroup) {
+		updateCurrentGroup();
+		reloadedCurrentGroup = true;
+	}
 	ImGui::Text("Current binding: %s", binding.c_str());
 	ImGui::InputText("##bind_key", &bind_key);
 	ImGui::SameLine();
@@ -16,9 +21,28 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 		pastBinding = bind_key;
 		
 	}
+	//swapCarBodyCapability = cvarManager->getCvar("swap_enabled").getBoolValue();
 	ImGui::Checkbox("Swap car body capability", &swapCarBodyCapability);
+	if (swapCarBodyCapability) {
+		cvarManager->getCvar("swap_enabled").setValue(1);
+	}
+	else {
+				cvarManager->getCvar("swap_enabled").setValue(0);
+	}
 	ImGui::Checkbox("Shuffle in Freeplay", &shuffleInFreeplay);
+	if (shuffleInFreeplay) {
+		cvarManager->getCvar("freeplay_shuffle_enabled").setValue(1);
+	}
+	else {
+		cvarManager->getCvar("freeplay_shuffle_enabled").setValue(0);
+	}
 	ImGui::Checkbox("Shuffle in Online Game", &shuffleInOnlineGame);
+	if (shuffleInOnlineGame) {
+		cvarManager->getCvar("online_shuffle_enabled").setValue(1);
+	}
+	else {
+		cvarManager->getCvar("online_shuffle_enabled").setValue(0);
+	}
 	ImGui::Text("Main preset group selected");
 	if (currentGroup.first.empty()) {
 		ImGui::Text("No group selected");
@@ -44,7 +68,10 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 
 	_globalCvarManager = cvarManager;
 
-
+	if (!reloadedCurrentGroup) {
+		updateCurrentGroup();
+		reloadedCurrentGroup = true;
+	}
 	ImGui::InputTextWithHint("##GroupName", "Search Groups", &queriedGroupName);
 	/*if (ImGui::Button("Create Group") && !newGroupName.empty()) {
 		groups.emplace_back(newGroupName, std::vector<Preset>{});
@@ -217,6 +244,8 @@ void OrganizeMyBakkesModGarage::RenderWindow() {
 					if(currentGroup.first == groups[i].first) buttonLabel = "Main";
 					if (ImGui::Button(buttonLabel.c_str())) {
 						currentGroup = groups[i];
+
+						cvarManager->getCvar("mainPresetGroupName").setValue(groups[i].first);
 						ImGui::CloseCurrentPopup();
 					}
 					if (ImGui::Button("Edit")) {

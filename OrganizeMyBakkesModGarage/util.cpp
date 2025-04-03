@@ -26,6 +26,18 @@ void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& fi
 	outFile.close();
 	std::cout << "Groups saved to file: " << filePath << std::endl;
 }
+void OrganizeMyBakkesModGarage::updateCurrentGroup() {
+	std::string name = cvarManager->getCvar("mainPresetGroupName").getStringValue();
+	for (auto& group : groups) {
+		if (group.first == name) {
+			LOG("Found group: {}", group.first);	
+			currentGroup = group;
+			break;
+		}
+	}
+	LOG("reloaded current group: {}", currentGroup.first);
+
+}
 
 void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& filePath) {
 	std::ifstream inFile(filePath);
@@ -38,7 +50,6 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 	std::string currentGroupName;
 	std::vector<Preset> currentPresets;
 	time_t currentTimestamp = time(nullptr);
-
 	while (std::getline(inFile, line)) {
 		if (line.empty()) continue;
 
@@ -46,6 +57,7 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 		if (line.back() == ':') {
 			if (!currentGroupName.empty()) {
 				// Save the previous group
+				
 				groups.push_back({ currentGroupName, PresetGroup(currentPresets, currentTimestamp) });
 			}
 

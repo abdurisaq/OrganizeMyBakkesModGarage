@@ -70,13 +70,14 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	bool showEditGroupWindow = false;
 	bool multiSelect = false;
 	int currentGroupIndex = -1;
+	std::string currentGroupNameCvar;
 	std::string searchQuery;
 
 	std::pair<std::string, PresetGroup> currentGroup;
 	std::string currentBakkesModPreset;
 	bool shuffleInFreeplay = false;
 	bool shuffleInOnlineGame = false;
-	bool swapCarBodyCapability = true;
+	bool swapCarBodyCapability = false;
 
 	std::filesystem::path groupFilePath;
 
@@ -94,6 +95,8 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	void onUnload() override; // Uncomment and implement if you need a unload method
 	void SaveGroupsToFile(const std::filesystem::path& filePath);
 	void LoadGroupsFromFile(const std::filesystem::path& filePath);
+	void updateCurrentGroup();
+	bool reloadedCurrentGroup = false;
 
 	template <typename T, typename... Args>
 	[[nodiscard]] std::shared_ptr<T> CreateModule(Args&&... args)
