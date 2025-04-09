@@ -4,7 +4,7 @@
 #include "bakkesmod/plugin/bakkesmodplugin.h"
 #include "bakkesmod/plugin/pluginwindow.h"
 #include "bakkesmod/plugin/PluginSettingsWindow.h"
-
+#include "bakkesmod/utilities/LoadoutUtilities.h"
 
 #include <Windows.h>
 #include <filesystem>
@@ -43,6 +43,13 @@ class PresetGroup {
 		this->presets = presets;
 		timeModified = timestamp;
 	}
+};
+
+struct CarInfo {
+	pluginsdk::Loadout loadout;
+	int team;
+	std::string player_name;
+	// add whatever else you want (e.g., score, boost usage, etc.)
 };
 
 class GuiFeatureBase;
@@ -116,7 +123,13 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	void decodePresetId(const std::string& presetId);
 	void validateCorrectCarBody(BMLoadout loadout);
 	void reSortGroups();
-
+	
+	BMLoadout ConvertToBMLoadout(const pluginsdk::Loadout& loadout, const CarInfo& car_info);
+	
+	//std::vector< std::optional<pluginsdk::Loadout>> allLoadouts;
+	std::unordered_map<std::string, CarInfo> car_info_map;
+	std::unordered_map<std::string, BMLoadout> carInfoBM;
+	
 
 public:
 	
@@ -124,4 +137,11 @@ public:
 	void RenderWindow() override; // Uncomment if you want to render your own plugin window
 	void OnClose() override;
 	void OnOpen() override;
+
+	void OnReplayOpen();
+	
+	void OnReplayClose() ;
+	void OnPriLoadoutSet(PriWrapper& pri);
+	void LogCarInfo(const std::unordered_map<std::string, CarInfo>& car_info_map);
+	
 };

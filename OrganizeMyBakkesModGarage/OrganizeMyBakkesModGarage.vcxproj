@@ -112,6 +112,7 @@
     <ClCompile Include="OrganizeMyBakkesModGarage.cpp" />
     <ClCompile Include="GuiBase.cpp" />
     <ClCompile Include="PresetDecoding.cpp" />
+    <ClCompile Include="presetEncoding.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>

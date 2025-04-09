@@ -93,6 +93,9 @@
     <ClCompile Include="BakkesModLoadoutLib.cpp">
       <Filter>Plugin\src</Filter>
     </ClCompile>
+    <ClCompile Include="presetEncoding.cpp">
+      <Filter>Plugin\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imgui_rangeslider.h">

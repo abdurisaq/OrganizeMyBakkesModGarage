@@ -51,49 +51,82 @@ enum ITEMPAINT {
 	PAINT_PLATINUM = 18
 };
 
+const char* getSlotName(EQUIPSLOT slot) {
+	static const std::unordered_map<EQUIPSLOT, const char*> slotNames = {
+		{SLOT_BODY, "Body"},//
+		{SLOT_SKIN, "Skin"},//
+		{SLOT_WHEELS, "Wheels"},//
+		{SLOT_BOOST, "Boost"},//
+		{SLOT_ANTENNA, "Antenna"},//
+		{SLOT_HAT, "Hat"},//
+		{SLOT_PAINTFINISH, "Paint Finish"},
+		{SLOT_PAINTFINISH_SECONDARY, "Secondary Paint Finish"},
+		{SLOT_ENGINE_AUDIO, "Engine Audio"},
+		{SLOT_SUPERSONIC_TRAIL, "Supersonic Trail"},
+		{SLOT_GOALEXPLOSION, "Goal Explosion"},
+		{SLOT_ANTHEM, "Anthem"}
+	};
+
+	auto it = slotNames.find(slot);
+	if (it != slotNames.end()) {
+		return it->second;
+	}
+
+	return "Unknown Slot";
+}
+
+// Function to print the loadout
 void print_loadout(BMLoadout loadout)
 {
-	std::cout << "HEADER " << std::endl << "\tVersion: " << unsigned(loadout.header.version) << std::endl;
-	std::cout << "\tSize in bytes: " << loadout.header.code_size << std::endl;
-	std::cout << "\tCRC: " << unsigned(loadout.header.crc) << std::endl << std::endl;
+	LOG("HEADER");
+	LOG("\tVersion: {}", unsigned(loadout.header.version));
+	LOG("\tSize in bytes: {}", loadout.header.code_size);
+	LOG("\tCRC: {}", unsigned(loadout.header.crc));
+	LOG("");  // Empty line for separation
 
-	std::cout << "Blue is orange: " << (loadout.body.blue_is_orange ? "true" : "false") << std::endl;
+	LOG("Blue is orange: {}", loadout.body.blue_is_orange ? "true" : "false");
 
-	std::cout << "Blue: " << std::endl;
-
+	LOG("Blue:");
 	for (auto body : loadout.body.blue_loadout)
 	{
-		std::cout << "\tSlot: " << unsigned(body.first) << ", ID: " << body.second.product_id << ", paint: " << unsigned(body.second.paint_index);
-		if (loadout.body.blue_wheel_team_id != 0 && body.second.slot_index == SLOT_WHEELS) {
-			std::cout << ", teamID: " << unsigned(loadout.body.blue_wheel_team_id);
+		const char* slotName = getSlotName(static_cast<EQUIPSLOT>(body.first));
+		if (slotName != "Unknown Slot") {
+			LOG("\tSlot: {}, Name: {}, ID: {}, paint: {}", unsigned(body.first), slotName, body.second.product_id, unsigned(body.second.paint_index));
+			if (loadout.body.blue_wheel_team_id != 0 && body.second.slot_index == SLOT_WHEELS) {
+				LOG("\t\tTeamID: {}", unsigned(loadout.body.blue_wheel_team_id));
+			}
 		}
-		std::cout << std::endl;
 	}
-	if (loadout.body.blueColor.should_override) {
-		std::cout << "Color Primary (" << unsigned(loadout.body.blueColor.primary_colors.r) << ", " << unsigned(loadout.body.blueColor.primary_colors.g) << ", " << unsigned(loadout.body.blueColor.primary_colors.b) << ")";
-		std::cout << " Secondary (" << unsigned(loadout.body.blueColor.secondary_colors.r) << ", " << unsigned(loadout.body.blueColor.secondary_colors.g) << ", " << unsigned(loadout.body.blueColor.secondary_colors.b) << ")";
-	}
+
+	//if (loadout.body.blueColor.should_override) {
+		LOG("Color Primary ({}, {}, {})", unsigned(loadout.body.blueColor.primary_colors.r), unsigned(loadout.body.blueColor.primary_colors.g), unsigned(loadout.body.blueColor.primary_colors.b));
+		LOG("Secondary ({}, {}, {})", unsigned(loadout.body.blueColor.secondary_colors.r), unsigned(loadout.body.blueColor.secondary_colors.g), unsigned(loadout.body.blueColor.secondary_colors.b));
+	//}
 
 	if (!loadout.body.blue_is_orange)
 	{
-		std::cout << std::endl << "Orange: " << std::endl;
+		LOG("");  // Empty line for separation
+		LOG("Orange:");
 		for (auto body : loadout.body.orange_loadout)
 		{
-			std::cout << "\tSlot: " << unsigned(body.first) << ", ID: " << body.second.product_id << ", paint: " << unsigned(body.second.paint_index);
-			if (loadout.body.orange_wheel_team_id != 0 && body.second.slot_index == SLOT_WHEELS) {
-				std::cout << ", teamID: " << unsigned(loadout.body.orange_wheel_team_id);
+
+			const char* slotName = getSlotName(static_cast<EQUIPSLOT>(body.first));
+			if (slotName != "Unknown Slot") {
+				LOG("\tSlot: {}, Name: {}, ID: {}, paint: {}", unsigned(body.first), slotName, body.second.product_id, unsigned(body.second.paint_index));
+				if (loadout.body.orange_wheel_team_id != 0 && body.second.slot_index == SLOT_WHEELS) {
+					LOG("\t\tTeamID: {}", unsigned(loadout.body.orange_wheel_team_id));
+				}
 			}
-			std::cout << std::endl;
 		}
 
 		if (loadout.body.orangeColor.should_override) {
-			std::cout << "Color Primary (" << unsigned(loadout.body.orangeColor.primary_colors.r) << ", " << unsigned(loadout.body.orangeColor.primary_colors.g) << ", " << unsigned(loadout.body.orangeColor.primary_colors.b) << ")";
-			std::cout << " Secondary (" << unsigned(loadout.body.orangeColor.secondary_colors.r) << ", " << unsigned(loadout.body.orangeColor.secondary_colors.g) << ", " << unsigned(loadout.body.orangeColor.secondary_colors.b) << ")";
+			LOG("Color Primary ({}, {}, {})", unsigned(loadout.body.orangeColor.primary_colors.r), unsigned(loadout.body.orangeColor.primary_colors.g), unsigned(loadout.body.orangeColor.primary_colors.b));
+			LOG("Secondary ({}, {}, {})", unsigned(loadout.body.orangeColor.secondary_colors.r), unsigned(loadout.body.orangeColor.secondary_colors.g), unsigned(loadout.body.orangeColor.secondary_colors.b));
 		}
 	}
-	std::cout << std::endl << std::endl;
-}
 
+	LOG("");  // Empty line for separation
+}
 std::map<uint8_t, Item> read_items_from_buffer(BitBinaryReader<unsigned char>& reader, const int loadoutVersion)
 {
 	std::map<uint8_t, Item> items;
