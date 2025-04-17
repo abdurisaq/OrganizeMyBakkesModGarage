@@ -310,10 +310,12 @@ void OrganizeMyBakkesModGarage::OnReplayOpen() {
 						unclaimedEpicIds.push_back(playerIdString);
 						LOG("Cleaned Epic ID: {}", playerIdString);
 						if (unclaimedPaintFinishes.size() > 0) {
-							paintFinishMap[unclaimedEpicIds.front()] = unclaimedPaintFinishes.back();
+							//paintFinishMap[unclaimedEpicIds.front()] = unclaimedPaintFinishes.back();
+							paintFinishMap[unclaimedEpicIds.back()] = unclaimedPaintFinishes.back();
 		
 							unclaimedPaintFinishes.pop_back();
-							unclaimedEpicIds.erase(unclaimedEpicIds.begin());
+							unclaimedEpicIds.pop_back();
+							//unclaimedEpicIds.erase(unclaimedEpicIds.begin());
 							checkAndConvert();
 							LOG("Added unclaimed paint finish to player ID: {}", playerIdString);
 							LOG("paint finish id's are {} and {}", paintFinishMap[playerIdString].first, paintFinishMap[playerIdString].second);
@@ -348,11 +350,14 @@ void OrganizeMyBakkesModGarage::OnReplayOpen() {
 				unclaimedPaintFinishes.push_back(currentPaintFinish);
 			}
 			else {
-				LOG("in paint finish but no id yet, pullnig from unclaimed ids:  {}", unclaimedEpicIds.front());
+				/*LOG("in paint finish but no id yet, pullnig from unclaimed ids:  {}", unclaimedEpicIds.front());
 				paintFinishMap[unclaimedEpicIds.front()] = currentPaintFinish;
-				previousEpicIdsUsed.push_back(unclaimedEpicIds.front());
-				//unclaimedEpicIds.pop_back();
-				unclaimedEpicIds.erase(unclaimedEpicIds.begin());
+				previousEpicIdsUsed.push_back(unclaimedEpicIds.front());*/
+				LOG("in paint finish but no id yet, pullnig from unclaimed ids:  {}", unclaimedEpicIds.back());
+				paintFinishMap[unclaimedEpicIds.back()] = currentPaintFinish;
+				previousEpicIdsUsed.push_back(unclaimedEpicIds.back());
+				unclaimedEpicIds.pop_back();
+				//unclaimedEpicIds.erase(unclaimedEpicIds.begin());
 			
 				
 				playerIdString.clear();
