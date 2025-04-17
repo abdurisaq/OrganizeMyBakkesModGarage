@@ -6,12 +6,14 @@
 
 RGB ConvertToRGB(float r, float g, float b)
 {
-	// Clamp values to the range [0, 255] and cast to uint8_t
-	return RGB{
-		static_cast<uint8_t>(std::clamp(r * 255.0f, 0.0f, 255.0f)),
-		static_cast<uint8_t>(std::clamp(g * 255.0f, 0.0f, 255.0f)),
-		static_cast<uint8_t>(std::clamp(b * 255.0f, 0.0f, 255.0f))
-	};
+  
+
+    return RGB{
+        static_cast<uint8_t>(std::clamp(r * 255.0f, 4.0f, 255.0f)),
+        static_cast<uint8_t>(std::clamp(g * 255.0f, 4.0f, 255.0f)),
+        static_cast<uint8_t>(std::clamp(b * 255.0f, 4.0f, 255.0f))
+    };
+    //upped it a bit because complete black at 0,0,0 wouldn't change the color for some reason
 }
 
 
@@ -48,11 +50,27 @@ BMLoadout OrganizeMyBakkesModGarage::ConvertToBMLoadout(const pluginsdk::Loadout
                 bmItem.paint_index = static_cast<uint8_t>(attr.value);  // Map paint index
             }
         }
-
+        //.body.blueColor.should_override
         // Assign the item to both blue and orange loadouts
         blueLoadout[static_cast<uint8_t>(slot)] = bmItem;
         orangeLoadout[static_cast<uint8_t>(slot)] = bmItem;
+        
     }
+    //7,12
+    PlatformId playerInfo;
+    playerInfo = ExtractPlatformId(car_info.playerId);
+
+    Item primaryPaintFinish;
+    primaryPaintFinish.slot_index = 7;
+    primaryPaintFinish.product_id = paintFinishMap[playerInfo.id].first;
+
+    blueLoadout[7] = primaryPaintFinish;
+
+    Item secondaryPaintFinish;
+    secondaryPaintFinish.slot_index = 12;
+    secondaryPaintFinish.product_id = paintFinishMap[playerInfo.id].second;
+
+    blueLoadout[12] = secondaryPaintFinish;
 
     // Assign loadouts to Body struct
     body.blue_loadout = blueLoadout;
@@ -87,8 +105,11 @@ BMLoadout OrganizeMyBakkesModGarage::ConvertToBMLoadout(const pluginsdk::Loadout
         LOG("    Team Paint: team {}, team_color_id {}, custom_color_id {}",
             			color.team_paint->team, color.team_paint->team_color_id, color.team_paint->custom_color_id);
         
-        blueColor.primary_colors = ConvertToRGB(colors[color.team_paint->team_color_id].color.R, colors[color.team_paint->team_color_id].color.G, colors[color.team_paint->team_color_id].color.B);
-        blueColor.secondary_colors = ConvertToRGB(colors[color.team_paint->custom_color_id].color.R, colors[color.team_paint->custom_color_id].color.G, colors[color.team_paint->custom_color_id].color.B);
+        blueColor.primary_colors = ConvertToRGB(colors[color.team_paint->team_color_id ].color.R, colors[color.team_paint->team_color_id ].color.G, colors[color.team_paint->team_color_id ].color.B);
+        blueColor.secondary_colors = ConvertToRGB(colors[color.team_paint->custom_color_id].color.R, colors[color.team_paint->custom_color_id ].color.G, colors[color.team_paint->custom_color_id ].color.B);
+
+        //.body.blueColor.should_override
+        blueColor.should_override = true;
     }
 
     //if bm overriding, this is primary color

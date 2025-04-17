@@ -54,7 +54,23 @@ void OrganizeMyBakkesModGarage::RenderSettings()
 			}
 		}
 	}
+	if (inReplay) {
+		ImGui::Text("Presets in replay");
 
+		for (auto& [key, value] : carInfoBMString) {
+			ImGui::Text("name : %s", key.c_str());
+
+			ImGui::SameLine();
+			std::string buttonLabel = "Copy##" + key; // Unique label per key
+
+			if (ImGui::Button(buttonLabel.c_str())) {
+				ImGui::SetClipboardText(value.c_str());
+			}
+
+			ImGui::SameLine();
+			ImGui::Text("id : %s", value.c_str());
+		}
+	}
 
 
 }

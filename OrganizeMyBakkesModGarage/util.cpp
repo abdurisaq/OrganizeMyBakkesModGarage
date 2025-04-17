@@ -241,3 +241,53 @@ void OrganizeMyBakkesModGarage::readCurrentBinding() {
 
 }
 
+
+
+PlatformId OrganizeMyBakkesModGarage::ExtractPlatformId(const std::string& platformString) {
+	PlatformId result;
+	size_t firstBar = platformString.find('|');
+
+	if (firstBar == std::string::npos) return result; // No bars found
+
+	// Extract platform type (before first '|')
+	result.type = platformString.substr(0, firstBar);
+
+	// Extract ID (between first and second '|')
+	size_t secondBar = platformString.find('|', firstBar + 1);
+	if (secondBar != std::string::npos) {
+		result.id = platformString.substr(firstBar + 1, secondBar - firstBar - 1);
+	}
+
+	return result;
+}
+
+
+void OrganizeMyBakkesModGarage::checkAndConvert() {
+	ServerWrapper server = gameWrapper->GetCurrentGameState();
+	if (!server) return;
+
+	int playerCount = server.GetPRIs().Count();
+	int paintFinishCount = paintFinishMap.size();
+	int carInfoCount = car_info_map.size();
+	LOG("checking for conversion, player count: {}, paint finish count {}, car info count {}", playerCount, paintFinishCount,carInfoCount);
+	
+	if (!conversionTriggered &&
+		paintFinishMap.size() >= playerCount &&
+		car_info_map.size() >= playerCount) {
+
+		conversionTriggered = true;
+		
+		LOG("Auto-converted data for {} players", playerCount);
+
+		for (const auto& [key, value] : car_info_map)
+		{
+			LOG("Car Info - Player: {} | Team: {}, id: {}", value.player_name, value.team,key);
+			carInfoBM[value.player_name] = ConvertToBMLoadout(value.loadout, value);
+			print_loadout(carInfoBM[value.player_name]);
+			LOG("primary paint finish name: {} , secondary paint finish name: {} ", gameWrapper->GetItemsWrapper().GetProduct( carInfoBM[value.player_name].body.blue_loadout[7].product_id).GetLabel().ToString(), gameWrapper->GetItemsWrapper().GetProduct(carInfoBM[value.player_name].body.blue_loadout[12].product_id).GetLabel().ToString());
+			carInfoBMString[value.player_name] = save(carInfoBM[value.player_name]);
+		}
+	}
+
+
+}

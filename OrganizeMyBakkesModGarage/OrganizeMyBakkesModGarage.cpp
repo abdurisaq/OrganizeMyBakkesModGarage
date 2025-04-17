@@ -34,6 +34,10 @@ void OrganizeMyBakkesModGarage::onLoad()
 		}, "print loadouts in replay", PERMISSION_ALL
 	);
 	cvarManager->setBind("F9", "printLoadouts");
+
+
+
+
 	readCurrentBakkesModPreset("cfg\\config.cfg");
 	
 	readCurrentBinding();
@@ -171,60 +175,213 @@ void OrganizeMyBakkesModGarage::onLoad()
 			gameWrapper->UnhookEventPost("Function TAGame.GameInfo_Replay_TA.EventGameEventSet");
 			});
 		});
+	gameWrapper->HookEvent("Function TAGame.GFxHUD_Replay_TA.Destroyed", [this](...) {
+		OnReplayClose();
+		});
 	
 }
+
+
 
 void OrganizeMyBakkesModGarage::OnReplayOpen() {
 	car_info_map.clear();
 	carInfoBM.clear();
-
+	paintFinishMap.clear();
+	unclaimedEpicIds.clear();
+	unclaimedPaintFinishes.clear();
+	conversionTriggered = false;
+	inReplay = true;
+	currentPaintFinish= { 0,0 };
+	previousEpicIdsUsed.clear();
+	carInfoBMString.clear();
 	auto game_event = gameWrapper->GetGameEventAsReplay();
 	if (!game_event)
 	{
 		return;
 	}
-	
+
 	auto replay = game_event.GetReplay();
 	if (!replay)
 	{
 		return;
 	}
 	auto replay_id = replay.GetId().ToString();
-	//TAGame.Car_TA.UpdateTeamLoadout
-	gameWrapper->HookEventWithCaller<CarWrapper>("Function TAGame.Car_TA.HandleLoadoutSelected",
-		[this](CarWrapper&& car, ...) {
-			if (auto pri = car.GetPRI()) {
-				
-				
-				/*LOG("Paint Finish: {}",);*/
-				std::string id = pri.GetUniqueIdWrapper().GetIdString();
+	
+	gameWrapper->HookEventWithCaller<PriWrapper>("Function TAGame.PRI_TA.HandleLoadoutLoaded", [this](PriWrapper cw, void* params, std::string eventName) {
+		if (cw.IsNull()) return;
+		std::string id = cw.GetUniqueIdWrapper().GetIdString();
+		LOG("id is {}", id);
 
-				// Only insert if not already present
-				if (!car_info_map.contains(id)) {
-					auto loadout_maybe = LoadoutUtilities::GetLoadoutFromPri(pri, pri.GetTeamNum2());
+		auto loadout_maybe = LoadoutUtilities::GetLoadoutFromPri(cw, cw.GetTeamNum2());
 
-					if (!loadout_maybe) return;
+		if (!loadout_maybe) return;
 
-					CarInfo info{
-						.loadout = *loadout_maybe,
-						.team = pri.GetTeamNum2(),
-						.player_name = pri.GetPlayerName().ToString()
-					};
+		CarInfo info{
+			.loadout = *loadout_maybe,
+			.team = cw.GetTeamNum2(),
+			.player_name = cw.GetPlayerName().ToString(),
+			.playerId = id,
+		};
 
-					car_info_map[id] = std::move(info);
+		car_info_map[id] = std::move(info);
+		LOG("from car info map");
+		checkAndConvert();
+
+		});
+
+	gameWrapper->HookEventWithCallerPost<CarMeshComponentBaseWrapper>("Function TAGame.CarMeshComponentBase_TA.SetTeamFinishID", [this](CarMeshComponentBaseWrapper cw, void* params, std::string eventName) {
+		if (cw.IsNull()) {
+			LOG("ProductAssetWrapper is null");
+			return;
+		}
+
+		//first 4 bytes is the product id of params;
+		int id = *reinterpret_cast<int*>(params);
+		currentPaintFinish.first = id;
+
+		});
+
+	//TAGame.GFxData_PRI_TA.SetPlayerIDString
+
+
+
+	gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.GFxData_PRI_TA.SetPlayerIDString",
+		[this](ActorWrapper cw, void* params, std::string eventName) {
+			struct FString {
+				wchar_t* Data;
+				int32_t Length;
+				int32_t Capacity;
+			};
+
+			FString* epicIdStr = reinterpret_cast<FString*>(params);
+
+			if (epicIdStr && epicIdStr->Data) {
+				// Convert UTF-16 to UTF-8
+				std::wstring wideStr(epicIdStr->Data, epicIdStr->Length);
+
+				// Get required buffer size WITHOUT null terminator
+				int size = WideCharToMultiByte(
+					CP_UTF8,
+					0,
+					wideStr.c_str(),
+					wideStr.length(),
+					nullptr,
+					0,
+					nullptr,
+					nullptr
+				);
+
+				if (size > 0) {
+					std::string epicId(size-1, '\0');
+					WideCharToMultiByte(
+						CP_UTF8,
+						0,
+						wideStr.c_str(),
+						wideStr.length(),
+						&epicId[0],
+						size,
+						nullptr,
+						nullptr
+					);
+					LOG("uncleaned Epic ID: {}", epicId);
+					// Platform ID extraction
+					PlatformId extracted = ExtractPlatformId(epicId);
+					if (extracted.type == "Epic") {
+						bool found = false;
+						for (const auto& id : previousEpicIdsUsed) {
+							if (id == extracted.id) {
+								found = true;
+								break;
+							}
+						}
+					
+						for (const auto& id : unclaimedEpicIds) {
+							if (id == extracted.id) {
+								found = true;
+								break;
+							}
+						}
+						if (found) {
+							LOG("Epic ID already used: {}", extracted.id);
+							return;
+						}
+						LOG("Epic ID being added to current playerID String : {}", extracted.id);
+						playerIdString = extracted.id;
+						unclaimedEpicIds.push_back(playerIdString);
+						LOG("Cleaned Epic ID: {}", playerIdString);
+						if (unclaimedPaintFinishes.size() > 0) {
+							paintFinishMap[unclaimedEpicIds.front()] = unclaimedPaintFinishes.back();
+		
+							unclaimedPaintFinishes.pop_back();
+							unclaimedEpicIds.erase(unclaimedEpicIds.begin());
+							checkAndConvert();
+							LOG("Added unclaimed paint finish to player ID: {}", playerIdString);
+							LOG("paint finish id's are {} and {}", paintFinishMap[playerIdString].first, paintFinishMap[playerIdString].second);
+							previousEpicIdsUsed.push_back(playerIdString);
+							playerIdString.clear();
+						}
+					}
 				}
 			}
+		}
+	);
+
+
+	gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.PlayerVanity_TA.SetPlayerID", [this](ActorWrapper cw, void* params, std::string eventName) {
+		
+		tempCount++;
+		if (tempCount % 2 == 0) return;
+		currentPlayerId = *reinterpret_cast<long long*>(params);
 		});
+	gameWrapper->HookEventWithCaller<CarMeshComponentBaseWrapper>("Function TAGame.CarMeshComponentBase_TA.SetCustomFinishID", [this](CarMeshComponentBaseWrapper cw, void* params, std::string eventName) {
+		if (cw.IsNull()) {
+			LOG("ProductAssetWrapper is null");
+			return;
+		}
+		int id = *reinterpret_cast<int*>(params);
+		
+		currentPaintFinish.second = id;
+		LOG("current paint finish is {} and {}", currentPaintFinish.first, currentPaintFinish.second);
+		if (currentPlayerId == 0) {
+			if (unclaimedEpicIds.empty()) {
+				LOG("player id is empty adding to unclaimed paint finishes");
+				unclaimedPaintFinishes.push_back(currentPaintFinish);
+			}
+			else {
+				LOG("in paint finish but no id yet, pullnig from unclaimed ids:  {}", unclaimedEpicIds.front());
+				paintFinishMap[unclaimedEpicIds.front()] = currentPaintFinish;
+				previousEpicIdsUsed.push_back(unclaimedEpicIds.front());
+				//unclaimedEpicIds.pop_back();
+				unclaimedEpicIds.erase(unclaimedEpicIds.begin());
+			
+				
+				playerIdString.clear();
+				checkAndConvert();
+			}
+		}
+		else {
+			LOG("user id is {}", currentPlayerId);
+			paintFinishMap[std::to_string(currentPlayerId)] = currentPaintFinish;
+			LOG("in user id, not set to 0");
+			checkAndConvert();
+		}
+		
+	});
+	
 }
 
 void OrganizeMyBakkesModGarage::OnReplayClose() 
 {
 
-	//LOG("Closing replay");
-	//not getting called
 	gameWrapper->UnhookEvent("Function TAGame.Car_TA.UpdateTeamLoadout");
-	/*car_info_map.clear();
-	carInfoBM.clear();*/
+	gameWrapper->UnhookEvent("Function TAGame.PlayerVanity_TA.SetPlayerID");
+	gameWrapper->UnhookEvent("Function TAGame.CarMeshComponentBase_TA.SetCustomFinishID");
+	gameWrapper->UnhookEvent("Function TAGame.GFxData_PRI_TA.SetPlayerIDString");
+	gameWrapper->UnhookEvent("Function TAGame.CarMeshComponentBase_TA.SetTeamFinishID");
+	gameWrapper->UnhookEvent("Function TAGame.PRI_TA.HandleLoadoutLoaded");
+	
+	inReplay = false;
+
 }
 
 const char* GetPaintName(pluginsdk::Itempaint paint)
@@ -285,68 +442,20 @@ void OrganizeMyBakkesModGarage::LogCarInfo(const std::unordered_map<std::string,
 	{
 		LOG("Car Info - Player: {} | Team: {}", value.player_name, value.team);
 		carInfoBM[value.player_name] = ConvertToBMLoadout(value.loadout, value);
+		carInfoBMString[value.player_name] = save(carInfoBM[value.player_name]);
+		//load("test");
+		print_loadout(carInfoBM[value.player_name]);
 	}
 
-	for (const auto& [key, value] : carInfoBM)
-	{
-		print_loadout(value);
-	}
-	// Iterate over each car's info in the map
-	for (const auto& [car_key, car_info] : car_info_map)
-	{
-
-		LOG("Car Info - Player: {} | Team: {}", car_info.player_name, car_info.team);
-
-		// Iterate over each item in the car's loadout
-		for (const auto& [slot, item] : car_info.loadout.items)
-		{
-			LOG("Slot {} => Product ID: {}", EquipslotToString(slot), item.product_id);
-
-			// Iterate over the item's attributes
-			for (const auto& attr : item.attributes)
-			{
-				if (attr.type == pluginsdk::ItemAttribute::AttributeType::PAINT)
-				{
-					LOG("        Paint: {} (ID: {})", GetPaintName(static_cast<pluginsdk::Itempaint>(attr.value)), attr.value);
-				}
-				
-				
-			}
-		}
-
-		LOG("==========================================");
-	}
-}
-
-void OrganizeMyBakkesModGarage::OnPriLoadoutSet(PriWrapper& pri) {
-	if (!pri)
-	{
-		return;
-	}
-
-	auto car = pri.GetCar();
-	//if no car they're spectating. Don't care about those
-	if (!car)
-	{
-		return;
-	}
+	for (auto [key, value] : paintFinishMap) {
+		LOG("Player Id :{}", key);
+		LOG("Primary Paint Finish: {}", value.first);
+		LOG("Secondary Paint Finish: {}", value.second);
 	
-
-	auto loadout_maybe = LoadoutUtilities::GetLoadoutFromPri(pri, pri.GetTeamNum2());
-	auto colors = LoadoutUtilities::GetPaintFinishColors(car);
-	if (!loadout_maybe)
-	{
-		return;
-	}
-	auto& [items, paint_finish] = *loadout_maybe;
-	for (const auto& [slot, item] : items) {
-		std::string slotName = EquipslotToString(slot);
-		if (slotName != "other") {
-			LOG("{}: Product ID {}", slotName, item.product_id);
-		}
 	}
 	
 }
+
 void OrganizeMyBakkesModGarage::onUnload() {
 	//LOG("Plugin  organizemygarage unloaded!");
 	SaveGroupsToFile(groupFilePath);

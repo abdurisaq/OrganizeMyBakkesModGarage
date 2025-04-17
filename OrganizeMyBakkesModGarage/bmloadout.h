@@ -52,5 +52,6 @@ struct BMLoadout
 
 
 BMLoadout load(std::string loadoutString);
+std::string save(BMLoadout loadout);
 
 void print_loadout(BMLoadout loadout);
