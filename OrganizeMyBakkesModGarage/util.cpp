@@ -355,7 +355,6 @@ std::string OrganizeMyBakkesModGarage::EquipslotToString(uint8_t slotIndex) {
 	case 4: return "antenna";
 	case 5: return "topper";
 	case 7: return "paint finish";
-	case 10: return "goal explosion";
 	case 12: return "secondary finish";
 	case 13: return "engine audio";
 	case 14: return "trail";
