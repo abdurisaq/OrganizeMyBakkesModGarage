@@ -4,7 +4,7 @@
 * Organize presets into groups for easy navigating
 ![Alt Text](/assets/adding.gif "Demo of adding to group.")
 
-* Edit existing groups\n
+* Edit existing groups
 ![Alt Text](/assets/editing.gif "demo of editing a group")
 
 * Sort groups by name, date and size in ascending and descending order
@@ -15,6 +15,9 @@
 
 * Select a group of presets as your main group, and toggle shuffling in freeplay or in online games
 ![Alt Text](/assets/shufflePresets.gif "demo of preset shuffling")
+
+* Copy any preset from any replay
+![Alt Text](/assets/copyPreset.png "demo of copying presets")
 
 ### Additional Informations
 
