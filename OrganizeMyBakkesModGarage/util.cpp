@@ -26,11 +26,12 @@ void OrganizeMyBakkesModGarage::SaveGroupsToFile(const std::filesystem::path& fi
 	outFile.close();
 	std::cout << "Groups saved to file: " << filePath << std::endl;
 }
+
 void OrganizeMyBakkesModGarage::updateCurrentGroup() {
 	std::string name = cvarManager->getCvar("mainPresetGroupName").getStringValue();
 	for (auto& group : groups) {
 		if (group.first == name) {
-			LOG("Found group: {}", group.first);	
+			LOG("Found group: {}", group.first);
 			currentGroup = group;
 			break;
 		}
@@ -45,7 +46,7 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 		std::cerr << "Failed to open file for reading: " << filePath << std::endl;
 		return;
 	}
-
+	groups.clear();
 	std::string line;
 	std::string currentGroupName;
 	std::vector<Preset> currentPresets;
@@ -57,7 +58,7 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 		if (line.back() == ':') {
 			if (!currentGroupName.empty()) {
 				// Save the previous group
-				
+
 				groups.push_back({ currentGroupName, PresetGroup(currentPresets, currentTimestamp) });
 			}
 
@@ -95,6 +96,7 @@ void OrganizeMyBakkesModGarage::LoadGroupsFromFile(const std::filesystem::path& 
 }
 
 std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& file_path) {
+	presets.clear();
 	const char* appdata = std::getenv("APPDATA");
 	if (appdata == nullptr) {
 		std::cerr << "Failed to get APPDATA environment variable\n";
@@ -116,6 +118,7 @@ std::vector<Preset> OrganizeMyBakkesModGarage::readPresets(const std::string& fi
 			if (std::getline(iss, name, '\t') && std::getline(iss, encoded_id)) {
 
 				presets.push_back({ name, encoded_id });
+				presetLookup[name] = encoded_id;
 			}
 		}
 	}
@@ -142,15 +145,15 @@ void  OrganizeMyBakkesModGarage::readCurrentBakkesModPreset(const std::string& f
 		return;
 	}
 	std::string path = std::string(appdata) + "\\bakkesmod\\bakkesmod\\" + file_path;
-	
-		//LOG("Reading presets from: {}", path);
+
+	//LOG("Reading presets from: {}", path);
 
 
 	std::ifstream file(path);
 
 	if (!file.is_open()) {
 		std::cerr << "Failed to open file: " << path << std::endl;
-		return ;
+		return;
 	}
 
 	std::string line;
@@ -159,14 +162,14 @@ void  OrganizeMyBakkesModGarage::readCurrentBakkesModPreset(const std::string& f
 	while (std::getline(file, line)) {
 		std::smatch match;
 		if (std::regex_search(line, match, codeRegex) && match.size() > 1) {
-			currentBakkesModPreset = match[1].str(); 
+			currentBakkesModPreset = match[1].str();
 			//LOG("Current BakkesMod preset: {}", currentBakkesModPreset);
-			 return;
+			return;
 		}
 	}
 
 	std::cerr << "cl_itemmod_code not found in the file." << std::endl;
-}	
+}
 
 
 void OrganizeMyBakkesModGarage::reSortGroups() {
@@ -229,7 +232,7 @@ void OrganizeMyBakkesModGarage::readCurrentBinding() {
 		std::smatch match;
 		if (std::regex_search(line, match, pattern)) {
 			pastBinding = bind_key = match[1].str();
-			return ; 
+			return;
 		}
 	}
 	//default
@@ -269,25 +272,111 @@ void OrganizeMyBakkesModGarage::checkAndConvert() {
 	int playerCount = server.GetPRIs().Count();
 	int paintFinishCount = paintFinishMap.size();
 	int carInfoCount = car_info_map.size();
-	LOG("checking for conversion, player count: {}, paint finish count {}, car info count {}", playerCount, paintFinishCount,carInfoCount);
-	
+	//LOG("checking for conversion, player count: {}, paint finish count {}, car info count {}", playerCount, paintFinishCount, carInfoCount);
+
 	if (!conversionTriggered &&
 		paintFinishMap.size() >= playerCount &&
 		car_info_map.size() >= playerCount) {
 
 		conversionTriggered = true;
-		
-		LOG("Auto-converted data for {} players", playerCount);
+
+		//LOG("Auto-converted data for {} players", playerCount);
 
 		for (const auto& [key, value] : car_info_map)
 		{
-			LOG("Car Info - Player: {} | Team: {}, id: {}", value.player_name, value.team,key);
+			//LOG("Car Info - Player: {} | Team: {}, id: {}", value.player_name, value.team, key);
 			carInfoBM[value.player_name] = ConvertToBMLoadout(value.loadout, value);
-			print_loadout(carInfoBM[value.player_name]);
-			LOG("primary paint finish name: {} , secondary paint finish name: {} ", gameWrapper->GetItemsWrapper().GetProduct( carInfoBM[value.player_name].body.blue_loadout[7].product_id).GetLabel().ToString(), gameWrapper->GetItemsWrapper().GetProduct(carInfoBM[value.player_name].body.blue_loadout[12].product_id).GetLabel().ToString());
+			if (value.team == 0) {
+				carInfoBM[value.player_name].body.blue_is_orange = false;
+			}
+			else {
+				carInfoBM[value.player_name].body.blue_is_orange = true;
+			}
+
+			//print_loadout(carInfoBM[value.player_name]);
+			ItemsWrapper items = gameWrapper->GetItemsWrapper();
+			//LOG("primary paint finish name: {} , secondary paint finish name: {} ", items.GetProduct(carInfoBM[value.player_name].body.blue_loadout[7].product_id).GetLabel().ToString(), items.GetProduct(carInfoBM[value.player_name].body.blue_loadout[12].product_id).GetLabel().ToString());
 			carInfoBMString[value.player_name] = save(carInfoBM[value.player_name]);
+			
+			for (auto &[slot, item] : carInfoBM[value.player_name].body.blue_loadout) {
+				
+				if (item.product_id == 0) {
+		
+					itemNameMap[value.player_name][slot] = "None";
+				}
+				else {
+					itemNameMap[value.player_name][slot] = items.GetProduct(item.product_id).GetLabel().ToString();
+				}
+				
+			}
+			
 		}
 	}
 
 
 }
+
+
+std::string OrganizeMyBakkesModGarage::GetPaintName(uint8_t paintIndex)
+{
+
+	switch (paintIndex)
+	{
+	case 0: return "None";
+	case 1: return "Crimson";
+	case 2: return "Lime";
+	case 3: return "Black";
+	case 4: return "Sky Blue";
+	case 5: return "Cobalt";
+	case 6: return "Burnt Sienna";
+	case 7: return "Forest Green";
+	case 8: return "Purple";
+	case 9: return "Pink";
+	case 10: return "Orange";
+	case 11: return "Grey";
+	case 12: return "Titanium White";
+	case 13: return "Saffron";
+	case 14: return "Gold";
+	case 15: return "Rose Gold";
+	case 16: return "White Gold";
+	case 17: return "Onyx";
+	case 18: return "Platinum";
+	default: return "Unknown";
+	}
+}
+
+std::string OrganizeMyBakkesModGarage::EquipslotToString(uint8_t slotIndex) {
+	// These values should match the pluginsdk::Equipslot enum values
+	switch (slotIndex) {
+	case 0: return "car body";
+	case 1: return "decal";
+	case 2: return "wheels";
+	case 3: return "rocket boost";
+	case 4: return "antenna";
+	case 5: return "topper";
+	case 7: return "paint finish";
+	case 10: return "goal explosion";
+	case 12: return "secondary finish";
+	case 13: return "engine audio";
+	case 14: return "trail";
+	case 15: return "goal explosion";
+	
+	default: return "other";
+	}
+}
+
+//
+//SLOT_BODY = 0, //Body won't be applied when loading in BakkesMod, user must have it equipped
+//SLOT_SKIN = 1,
+//SLOT_WHEELS = 2,
+//SLOT_BOOST = 3,
+//SLOT_ANTENNA = 4,
+//SLOT_HAT = 5,
+//
+//SLOT_PAINTFINISH = 7,
+//SLOT_PAINTFINISH_SECONDARY = 12,
+//
+//SLOT_ENGINE_AUDIO = 13,
+//SLOT_SUPERSONIC_TRAIL = 14,
+//SLOT_GOALEXPLOSION = 15,
+//SLOT_ANTHEM = 18

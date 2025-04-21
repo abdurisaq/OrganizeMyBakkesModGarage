@@ -114,6 +114,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	bool sortDirection = true;
 	int pastSortOption = 0;
 	std::vector<Preset> presets;
+	std::unordered_map<std::string, std::string> presetLookup;
 	bool showAddPresetWindow = false;
 	bool showEditGroupWindow = false;
 	bool multiSelect = false;
@@ -143,6 +144,7 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 
 	void onUnload() override; // Uncomment and implement if you need a unload method
 	void SaveGroupsToFile(const std::filesystem::path& filePath);
+
 	void LoadGroupsFromFile(const std::filesystem::path& filePath);
 	void updateCurrentGroup();
 	bool reloadedCurrentGroup = false;
@@ -177,6 +179,13 @@ class OrganizeMyBakkesModGarage: public BakkesMod::Plugin::BakkesModPlugin
 	void checkAndConvert();
 	bool conversionTriggered = false;
 
+
+	void RenderQuickPreview(const BMLoadout& loadout, std::string name);
+	std::string GetPaintName(uint8_t paintIndex);
+	std::string EquipslotToString(uint8_t slotIndex);
+	
+	std::unordered_map<std::string, std::unordered_map<int, std::string>> itemNameMap;
+	//ItemsWrapper items;
 public:
 	
 	void RenderSettings() override; // Uncomment if you wanna render your own tab in the settings menu

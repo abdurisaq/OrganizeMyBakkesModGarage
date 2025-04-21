@@ -92,6 +92,7 @@ void print_loadout(BMLoadout loadout)
 		const char* slotName = getSlotName(static_cast<EQUIPSLOT>(body.first));
 		if (slotName != "Unknown Slot") {
 			LOG("\tSlot: {}, Name: {}, ID: {}, paint: {}", unsigned(body.first), slotName, body.second.product_id, unsigned(body.second.paint_index));
+			
 			if (loadout.body.blue_wheel_team_id != 0 && body.second.slot_index == SLOT_WHEELS) {
 				LOG("\t\tTeamID: {}", unsigned(loadout.body.blue_wheel_team_id));
 			}
