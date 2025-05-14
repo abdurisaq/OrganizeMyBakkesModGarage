@@ -269,18 +269,27 @@ void OrganizeMyBakkesModGarage::checkAndConvert() {
 	ServerWrapper server = gameWrapper->GetCurrentGameState();
 	if (!server) return;
 
-	int playerCount = server.GetPRIs().Count();
+	ArrayWrapper<PriWrapper> players = server.GetPRIs();
+	int playerCount = 0;
+
+	for (auto player : players) {
+		//LOG("Player: {} | Team: {}", player.GetPlayerName().ToString(), player.GetTeamNum2());
+		if (player.GetTeamNum2() == 0 || player.GetTeamNum2() == 1) {
+			playerCount++;
+		}
+	}
+	//int playerCount = server.GetPRIs().Count();
 	int paintFinishCount = paintFinishMap.size();
 	int carInfoCount = car_info_map.size();
 	//LOG("checking for conversion, player count: {}, paint finish count {}, car info count {}", playerCount, paintFinishCount, carInfoCount);
-
+	
 	if (!conversionTriggered &&
 		paintFinishMap.size() >= playerCount &&
 		car_info_map.size() >= playerCount) {
 
 		conversionTriggered = true;
 
-		//LOG("Auto-converted data for {} players", playerCount);
+		LOG("Auto-converted data for {} players", playerCount);
 
 		for (const auto& [key, value] : car_info_map)
 		{
@@ -309,6 +318,7 @@ void OrganizeMyBakkesModGarage::checkAndConvert() {
 				}
 				
 			}
+			LOG("{}'s loadout: ", value.player_name);
 			
 		}
 	}
@@ -364,18 +374,3 @@ std::string OrganizeMyBakkesModGarage::EquipslotToString(uint8_t slotIndex) {
 	}
 }
 
-//
-//SLOT_BODY = 0, //Body won't be applied when loading in BakkesMod, user must have it equipped
-//SLOT_SKIN = 1,
-//SLOT_WHEELS = 2,
-//SLOT_BOOST = 3,
-//SLOT_ANTENNA = 4,
-//SLOT_HAT = 5,
-//
-//SLOT_PAINTFINISH = 7,
-//SLOT_PAINTFINISH_SECONDARY = 12,
-//
-//SLOT_ENGINE_AUDIO = 13,
-//SLOT_SUPERSONIC_TRAIL = 14,
-//SLOT_GOALEXPLOSION = 15,
-//SLOT_ANTHEM = 18
